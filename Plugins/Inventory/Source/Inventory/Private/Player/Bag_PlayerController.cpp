@@ -5,6 +5,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Interaction/Bag_Highlightable.h"
 #include "Items/Components/Bag_ItemComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Widgets/HUD/Bag_HUDWidget.h"
@@ -111,6 +112,11 @@ void ABag_PlayerController::TraceForItem()
 
 	if (ThisActor.IsValid())
 	{
+		if (UActorComponent* Highlightable = ThisActor->FindComponentByInterface(UBag_Highlightable::StaticClass()); IsValid(Highlightable))
+		{
+			IBag_Highlightable::Execute_Highlight(Highlightable);
+		}
+
 		UBag_ItemComponent* ItemComponent = ThisActor->FindComponentByClass<UBag_ItemComponent>();
 		if (!IsValid(ItemComponent))
 		{
@@ -125,6 +131,9 @@ void ABag_PlayerController::TraceForItem()
 
 	if (LastActor.IsValid())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Stop trace last actor"));
+		if (UActorComponent* Highlightable = LastActor->FindComponentByInterface(UBag_Highlightable::StaticClass()); IsValid(Highlightable))
+		{
+			IBag_Highlightable::Execute_UnHighlight(Highlightable);
+		}
 	}
 }
