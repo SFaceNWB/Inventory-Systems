@@ -5,6 +5,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Items/Components/Bag_ItemComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Widgets/HUD/Bag_HUDWidget.h"
 
@@ -12,6 +13,7 @@ ABag_PlayerController::ABag_PlayerController()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	TraceLength = 500.0f;
+	ItemTraceChannel = ECC_GameTraceChannel1;
 }
 
 void ABag_PlayerController::Tick(float DeltaSeconds)
@@ -94,6 +96,14 @@ void ABag_PlayerController::TraceForItem()
 	LastActor = ThisActor;
 	ThisActor = HitResult.GetActor();
 
+	if (!ThisActor.IsValid())
+	{
+		if (IsValid(HUDWidget))
+		{
+			HUDWidget->HidePickupMessage();
+		}
+	}
+
 	if (ThisActor == LastActor)
 	{
 		return;
@@ -101,7 +111,16 @@ void ABag_PlayerController::TraceForItem()
 
 	if (ThisActor.IsValid())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Start trace a new actor"));
+		UBag_ItemComponent* ItemComponent = ThisActor->FindComponentByClass<UBag_ItemComponent>();
+		if (!IsValid(ItemComponent))
+		{
+			return;
+		}
+
+		if (IsValid(HUDWidget))
+		{
+			HUDWidget->ShowPickupMessage(ItemComponent->GetPickupMessage());
+		}
 	}
 
 	if (LastActor.IsValid())
