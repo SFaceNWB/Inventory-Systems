@@ -22,7 +22,7 @@ public:
 	ABag_PlayerController();
 	virtual void Tick(float DeltaSeconds) override;
 
-	UFUNCTION(Blueprintable)
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void ToggleInventory();
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
