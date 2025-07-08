@@ -7,7 +7,10 @@
 #include "Bag_InventoryComponent.generated.h"
 
 
+class UBag_InventoryItem;
 class UBag_InventoryBase;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemChange, UBag_InventoryItem*, Item);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable )
 class INVENTORY_API UBag_InventoryComponent : public UActorComponent
@@ -19,6 +22,8 @@ public:
 
 	void ToggleInventoryMenu();
 
+	FInventoryItemChange OnItemAdded;
+	FInventoryItemChange OnItemRemoved;
 protected:
 	virtual void BeginPlay() override;
 
