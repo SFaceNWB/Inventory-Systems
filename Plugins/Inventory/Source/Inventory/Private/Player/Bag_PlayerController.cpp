@@ -6,6 +6,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Interaction/Bag_Highlightable.h"
+#include "InventoryManagement/Components/Bag_InventoryComponent.h"
 #include "Items/Components/Bag_ItemComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Widgets/HUD/Bag_HUDWidget.h"
@@ -24,6 +25,15 @@ void ABag_PlayerController::Tick(float DeltaSeconds)
 	TraceForItem();
 }
 
+void ABag_PlayerController::ToggleInventory()
+{
+	if (!InventoryComponent.IsValid())
+	{
+		return;
+	}
+	InventoryComponent->ToggleInventoryMenu();
+}
+
 void ABag_PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -34,8 +44,8 @@ void ABag_PlayerController::BeginPlay()
 		Subsystem->AddMappingContext(DefaultIMC, 0);
 	}
 
+	InventoryComponent = FindComponentByClass<UBag_InventoryComponent>();
 	CreateHUDWidget();
-
 }
 
 void ABag_PlayerController::SetupInputComponent()
@@ -52,6 +62,7 @@ void ABag_PlayerController::SetupInputComponent()
 	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
 
 	EnhancedInputComponent->BindAction(PrimaryInteractAction, ETriggerEvent::Started, this, &ABag_PlayerController::PrimaryInteract);
+	EnhancedInputComponent->BindAction(ToggleInventoryAction, ETriggerEvent::Started, this, &ABag_PlayerController::ToggleInventory);
 }
 
 void ABag_PlayerController::PrimaryInteract()
