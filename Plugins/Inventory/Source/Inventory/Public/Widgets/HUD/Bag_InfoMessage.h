@@ -4,30 +4,35 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Bag_HUDWidget.generated.h"
+#include "Bag_InfoMessage.generated.h"
 
-class UBag_InfoMessage;
+class UTextBlock;
 /**
  * 
  */
 UCLASS()
-class INVENTORY_API UBag_HUDWidget : public UUserWidget
+class INVENTORY_API UBag_InfoMessage : public UUserWidget
 {
 	GENERATED_BODY()
+
 public:
 	virtual void NativeOnInitialized() override;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
-	void ShowPickupMessage(const FString& Message);
+	void MessageShow();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
-	void HidePickupMessage();
+	void MessageHide();
 
+	void SetMessage(const FText& Message);
 private:
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UBag_InfoMessage> InfoMessage;
+	TObjectPtr<UTextBlock> Text_Message;
 
-	UFUNCTION()
-	void OnNoRoom();
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	float MessageLifeTime{3.0f};
+
+	FTimerHandle MessageTimer;
+	bool bIsMessageActive{ false };
 };

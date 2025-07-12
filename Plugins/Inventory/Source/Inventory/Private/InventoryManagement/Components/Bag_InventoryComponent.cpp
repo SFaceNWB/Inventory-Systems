@@ -10,6 +10,11 @@ UBag_InventoryComponent::UBag_InventoryComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+void UBag_InventoryComponent::TryAddItem(UBag_ItemComponent* ItemComponent)
+{
+	NoRoomInInventory.Broadcast();
+}
+
 void UBag_InventoryComponent::ToggleInventoryMenu()
 {
 	if (bInventoryMenuOpen)

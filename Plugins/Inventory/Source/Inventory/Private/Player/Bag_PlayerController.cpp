@@ -67,7 +67,16 @@ void ABag_PlayerController::SetupInputComponent()
 
 void ABag_PlayerController::PrimaryInteract()
 {
-	UE_LOG(LogTemp, Log, TEXT("Primary Interact"));
+	if (!ThisActor.IsValid())
+	{
+		return;
+	}
+	UBag_ItemComponent* ItemComponent = ThisActor->FindComponentByClass<UBag_ItemComponent>();
+	if (!IsValid(ItemComponent) || !InventoryComponent.IsValid())
+	{
+		return;
+	}
+	InventoryComponent->TryAddItem(ItemComponent);
 }
 
 void ABag_PlayerController::CreateHUDWidget()
