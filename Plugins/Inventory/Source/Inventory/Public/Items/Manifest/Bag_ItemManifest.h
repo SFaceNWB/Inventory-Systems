@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Types/Bag_GridTypes.h"
 #include "StructUtils/InstancedStruct.h"
+#include "GameplayTagContainer.h"
 #include "Bag_ItemManifest.generated.h"
 
 enum class EBag_ItemCategory : uint8;
@@ -19,9 +20,13 @@ struct INVENTORY_API FBag_ItemManifest
 
 	UBag_InventoryItem* Manifest(UObject* NewOuter);
 	EBag_ItemCategory GetIemCategory() const { return ItemCategory; }
+	FGameplayTag GetItemType() const { return ItemType; }
 
 private:
 
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	EBag_ItemCategory ItemCategory{ EBag_ItemCategory::None };
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	FGameplayTag ItemType;
 };
