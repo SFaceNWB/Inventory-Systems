@@ -9,14 +9,11 @@ void UBag_InfoMessage::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	Text_Message->SetText(FText::GetEmpty());
 	MessageHide();
 }
 
-void UBag_InfoMessage::SetMessage(const FText& Message)
+void UBag_InfoMessage::SetMessage()
 {
-	Text_Message->SetText(Message);
-
 	if (!bIsMessageActive)
 	{
 		MessageShow();

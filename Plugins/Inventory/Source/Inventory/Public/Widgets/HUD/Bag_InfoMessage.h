@@ -24,7 +24,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
 	void MessageHide();
 
-	void SetMessage(const FText& Message);
+	void SetMessage();
 private:
 
 	UPROPERTY(meta = (BindWidget))

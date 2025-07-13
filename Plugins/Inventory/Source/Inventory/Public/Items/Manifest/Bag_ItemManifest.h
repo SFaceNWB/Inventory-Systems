@@ -8,6 +8,7 @@
 #include "GameplayTagContainer.h"
 #include "Bag_ItemManifest.generated.h"
 
+struct FBag_ItemFragment;
 enum class EBag_ItemCategory : uint8;
 class UBag_InventoryItem;
 /**
@@ -23,6 +24,9 @@ struct INVENTORY_API FBag_ItemManifest
 	FGameplayTag GetItemType() const { return ItemType; }
 
 private:
+
+	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (ExcludeBaseStruct))
+	TArray<TInstancedStruct<FBag_ItemFragment>> Fragment;
 
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	EBag_ItemCategory ItemCategory{ EBag_ItemCategory::None };
