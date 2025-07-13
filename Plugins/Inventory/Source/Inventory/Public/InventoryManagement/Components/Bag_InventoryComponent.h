@@ -4,9 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "InventoryManagement/FastArray/Bag_FastArray.h"
 #include "Bag_InventoryComponent.generated.h"
 
 
+class UBag_ItemComponent;
 class UBag_InventoryItem;
 class UBag_InventoryBase;
 
@@ -21,10 +23,19 @@ class INVENTORY_API UBag_InventoryComponent : public UActorComponent
 public:	
 	UBag_InventoryComponent();
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly ,Category = "Inventory")
 	void TryAddItem(UBag_ItemComponent* ItemComponent);
 
+	UFUNCTION(Server, Reliable)
+	void Server_AddNewItem(UBag_ItemComponent* ItemComponent, int32 StackCount);
+
+	UFUNCTION(Server, Reliable)
+	void Server_AddStacksToItem(UBag_ItemComponent* ItemComponent, int32 StackCount, int32 Remainder);
+
 	void ToggleInventoryMenu();
+	void AddRepSubObj(UObject* SubObj);
 
 	FInventoryItemChange OnItemAdded;
 	FInventoryItemChange OnItemRemoved;
@@ -36,6 +47,9 @@ private:
 	TWeakObjectPtr<APlayerController> OwningController;
 
 	void ConstructInventory();
+
+	UPROPERTY(Replicated)
+	FBag_InventoryFastArray InventoryList;
 
 	UPROPERTY()
 	TObjectPtr<UBag_InventoryBase> InventoryMenu;

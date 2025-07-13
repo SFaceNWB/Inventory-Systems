@@ -5,6 +5,7 @@
 
 #include "InventoryManagement/Components/Bag_InventoryComponent.h"
 #include "Items/Bag_InventoryItem.h"
+#include "Items/Components/Bag_ItemComponent.h"
 
 TArray<UBag_InventoryItem*> FBag_InventoryFastArray::GetAllItems() const
 {
@@ -51,8 +52,23 @@ void FBag_InventoryFastArray::PostReplicatedAdd(const TArrayView<int32> AddedInd
 
 UBag_InventoryItem* FBag_InventoryFastArray::AddEntry(UBag_ItemComponent* ItemComponent)
 {
-	//TODO:等ItemComponent完整后再完成
-	return nullptr;
+	check(OwnerComponent);
+	AActor* OwningActor = OwnerComponent->GetOwner();
+	check(OwningActor->HasAuthority());
+
+	UBag_InventoryComponent* IC = Cast<UBag_InventoryComponent>(OwnerComponent);
+	if (!IsValid(IC))
+	{
+		return nullptr;
+	}
+
+	FBag_InventoryEntry& NewEntry = Entries.AddDefaulted_GetRef();
+	NewEntry.Item = ItemComponent->GetItemManifest().Manifest(OwningActor);
+
+	IC->AddRepSubObj(NewEntry.Item);
+	MarkItemDirty(NewEntry);
+
+	return NewEntry.Item;
 }
 
 UBag_InventoryItem* FBag_InventoryFastArray::AddEntry(UBag_InventoryItem* Item)
@@ -61,7 +77,7 @@ UBag_InventoryItem* FBag_InventoryFastArray::AddEntry(UBag_InventoryItem* Item)
 	AActor* OwningActor = OwnerComponent->GetOwner();
 	check(OwningActor->HasAuthority());
 
-	FBag_InventoryEntry NewEntry = Entries.AddDefaulted_GetRef();
+	FBag_InventoryEntry& NewEntry = Entries.AddDefaulted_GetRef();
 	NewEntry.Item = Item;
 
 	MarkItemDirty(NewEntry);

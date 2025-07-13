@@ -17,6 +17,11 @@ void UBag_SpatialInventory::NativeOnInitialized()
 	ShowEquipped();
 }
 
+FBag_SlotAvailabilityResult UBag_SpatialInventory::HasRoomForItem(UBag_ItemComponent* ItemComponent) const
+{
+	return FBag_SlotAvailabilityResult();
+}
+
 void UBag_SpatialInventory::ShowEquipped()
 {
 	SetActiveGrid(Grid_Equipped,Button_Equipped);

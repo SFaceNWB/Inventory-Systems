@@ -21,6 +21,7 @@ public:
 
 	virtual void NativeOnInitialized() override;
 
+	virtual FBag_SlotAvailabilityResult HasRoomForItem(UBag_ItemComponent* ItemComponent) const override;
 private:
 
 	UPROPERTY(meta = (BindWidget))

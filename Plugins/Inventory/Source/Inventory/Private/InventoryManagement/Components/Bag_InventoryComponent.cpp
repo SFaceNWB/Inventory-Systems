@@ -3,16 +3,57 @@
 
 #include "InventoryManagement/Components/Bag_InventoryComponent.h"
 
+#include "Net/UnrealNetwork.h"
 #include "Widgets/Inventory/InventoryBase/Bag_InventoryBase.h"
 
 UBag_InventoryComponent::UBag_InventoryComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	SetIsReplicatedByDefault(true);
+	bReplicateUsingRegisteredSubObjectList = true;
+	bInventoryMenuOpen = false;
+}
+
+void UBag_InventoryComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, InventoryList);
 }
 
 void UBag_InventoryComponent::TryAddItem(UBag_ItemComponent* ItemComponent)
 {
-	NoRoomInInventory.Broadcast();
+	FBag_SlotAvailabilityResult Result = InventoryMenu->HasRoomForItem(ItemComponent);
+
+	if (Result.TotalRoomToFill == 0)
+	{
+		NoRoomInInventory.Broadcast();
+		return;
+	}
+
+	if (Result.Item.IsValid() && Result.bStackable)
+	{
+		// 向背包中添加已经存在的物品添加堆叠数量
+		Server_AddStacksToItem(ItemComponent, Result.TotalRoomToFill, Result.Remainder);
+	}
+	else if (Result.TotalRoomToFill > 0)
+	{
+		// 背包中不存在这个物品， 创建并更新背包中的相关槽位
+		Server_AddNewItem(ItemComponent, Result.bStackable ? Result.TotalRoomToFill : 0);
+	}
+}
+
+void UBag_InventoryComponent::Server_AddNewItem_Implementation(UBag_ItemComponent* ItemComponent, int32 StackCount)
+{
+	UBag_InventoryItem* NewItem = InventoryList.AddEntry(ItemComponent);
+
+	// TODO: 让物品组件销毁它的拥有者
+}
+
+void UBag_InventoryComponent::Server_AddStacksToItem_Implementation(UBag_ItemComponent* ItemComponent, int32 StackCount,
+	int32 Remainder)
+{
+
 }
 
 void UBag_InventoryComponent::ToggleInventoryMenu()
@@ -24,6 +65,14 @@ void UBag_InventoryComponent::ToggleInventoryMenu()
 	else
 	{
 		OpenInventoryMenu();
+	}
+}
+
+void UBag_InventoryComponent::AddRepSubObj(UObject* SubObj)
+{
+	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && IsValid(SubObj))
+	{
+		AddReplicatedSubObject(SubObj);
 	}
 }
 

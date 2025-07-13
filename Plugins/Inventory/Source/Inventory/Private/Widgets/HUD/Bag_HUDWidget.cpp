@@ -25,5 +25,4 @@ void UBag_HUDWidget::OnNoRoom()
 		return;
 	}
 	InfoMessage->SetMessage(FText::FromString("No Room In Inventory"));
-
 }
