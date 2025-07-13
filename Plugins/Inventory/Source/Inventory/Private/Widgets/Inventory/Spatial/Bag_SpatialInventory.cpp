@@ -19,7 +19,9 @@ void UBag_SpatialInventory::NativeOnInitialized()
 
 FBag_SlotAvailabilityResult UBag_SpatialInventory::HasRoomForItem(UBag_ItemComponent* ItemComponent) const
 {
-	return FBag_SlotAvailabilityResult();
+	FBag_SlotAvailabilityResult Result;
+	Result.TotalRoomToFill = 1;
+	return Result;
 }
 
 void UBag_SpatialInventory::ShowEquipped()

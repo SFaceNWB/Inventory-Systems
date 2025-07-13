@@ -7,6 +7,7 @@
 #include "Widgets/Inventory/InventoryBase/Bag_InventoryBase.h"
 
 UBag_InventoryComponent::UBag_InventoryComponent()
+	:InventoryList(this)
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
@@ -46,6 +47,11 @@ void UBag_InventoryComponent::TryAddItem(UBag_ItemComponent* ItemComponent)
 void UBag_InventoryComponent::Server_AddNewItem_Implementation(UBag_ItemComponent* ItemComponent, int32 StackCount)
 {
 	UBag_InventoryItem* NewItem = InventoryList.AddEntry(ItemComponent);
+
+	if (GetOwner()->GetNetMode() == NM_ListenServer || GetOwner()->GetNetMode() == NM_Standalone)
+	{
+		OnItemAdded.Broadcast(NewItem);
+	}
 
 	// TODO: 让物品组件销毁它的拥有者
 }

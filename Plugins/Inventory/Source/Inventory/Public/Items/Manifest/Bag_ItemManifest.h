@@ -19,7 +19,7 @@ struct INVENTORY_API FBag_ItemManifest
 	GENERATED_BODY()
 
 	UBag_InventoryItem* Manifest(UObject* NewOuter);
-	EBag_ItemCategory GetIemCategory() const { return ItemCategory; }
+	EBag_ItemCategory GetItemCategory() const { return ItemCategory; }
 	FGameplayTag GetItemType() const { return ItemType; }
 
 private:

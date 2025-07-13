@@ -8,6 +8,7 @@
 
 #include "Bag_InventoryGrid.generated.h"
 
+class UBag_InventoryComponent;
 class UCanvasPanel;
 class UBag_GridSlot;
 /**
@@ -22,7 +23,12 @@ public:
 
 	EBag_ItemCategory GetItemCategory() const { return ItemCategory; }
 
+	UFUNCTION()
+	void AddItem(UBag_InventoryItem* Item);
+
 private:
+
+	TWeakObjectPtr<UBag_InventoryComponent> InventoryComponent;
 
 	void ConstructGrid();
 
@@ -46,6 +52,8 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	float TileSize;
+
+	bool MatchesCategory(const UBag_InventoryItem* Item) const;
 };
 
 

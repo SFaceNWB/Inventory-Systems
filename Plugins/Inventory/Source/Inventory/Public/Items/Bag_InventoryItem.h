@@ -15,8 +15,11 @@ class INVENTORY_API UBag_InventoryItem : public UObject
 	GENERATED_BODY()
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual bool IsSupportedForNetworking() const override { return true; }
 
 	void SetItemManifest(const FBag_ItemManifest& Manifest);
+	const FBag_ItemManifest& GetItemManifest() const { return ItemManifest.Get<FBag_ItemManifest>(); }
+	FBag_ItemManifest& GetItemManifestMutable() { return ItemManifest.GetMutable<FBag_ItemManifest>(); }
 private:
 
 	UPROPERTY(VisibleAnywhere, meta = (BaseStruct = "/Script/Inventory.Bag_ItemManifest"), Replicated)
