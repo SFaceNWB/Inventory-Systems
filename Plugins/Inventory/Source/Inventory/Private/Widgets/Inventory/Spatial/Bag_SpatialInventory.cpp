@@ -5,6 +5,8 @@
 #include "Widgets/Inventory/Spatial/Bag_InventoryGrid.h"
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
+#include "InventoryManagement/Utils/Bag_InventoryStatics.h"
+#include "Inventory.h"
 
 void UBag_SpatialInventory::NativeOnInitialized()
 {
@@ -19,9 +21,18 @@ void UBag_SpatialInventory::NativeOnInitialized()
 
 FBag_SlotAvailabilityResult UBag_SpatialInventory::HasRoomForItem(UBag_ItemComponent* ItemComponent) const
 {
-	FBag_SlotAvailabilityResult Result;
-	Result.TotalRoomToFill = 1;
-	return Result;
+	switch (UBag_InventoryStatics::GetItemCategoryFromItemComponent(ItemComponent))
+	{
+	case EBag_ItemCategory::Equipped:
+		return Grid_Equipped->HasRoomForItem(ItemComponent);
+	case EBag_ItemCategory::Consumable:
+		return Grid_Consumables->HasRoomForItem(ItemComponent);
+	case EBag_ItemCategory::Craftable:
+		return Grid_Craftables->HasRoomForItem(ItemComponent);
+	default:
+		UE_LOG(LogInventory, Error, TEXT("ItemComponent doesn't have a valid Item Category."));
+		return FBag_SlotAvailabilityResult();
+	}
 }
 
 void UBag_SpatialInventory::ShowEquipped()

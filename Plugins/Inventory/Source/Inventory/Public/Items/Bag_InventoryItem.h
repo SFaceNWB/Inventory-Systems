@@ -25,3 +25,18 @@ private:
 	UPROPERTY(VisibleAnywhere, meta = (BaseStruct = "/Script/Inventory.Bag_ItemManifest"), Replicated)
 	FInstancedStruct ItemManifest;
 };
+
+template <typename FragmentType>
+const FragmentType* GetFragment(const UBag_InventoryItem* Item, const FGameplayTag& Tag)
+{
+	if (!IsValid(Item))
+	{
+		return nullptr;
+	}
+	const FBag_ItemManifest& Manifest = Item->GetItemManifest();
+	return Manifest.GetFragmentOfTypeWithTag<FragmentType>(Tag);
+}
+
+
+
+

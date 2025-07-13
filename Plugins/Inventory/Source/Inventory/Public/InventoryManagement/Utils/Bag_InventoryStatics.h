@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Items/Manifest/Bag_ItemManifest.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Bag_InventoryStatics.generated.h"
 
+class UBag_ItemComponent;
 class UBag_InventoryComponent;
 /**
  * 
@@ -18,4 +20,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	static UBag_InventoryComponent* GetInventoryComponent(const APlayerController* PlayerController);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	static EBag_ItemCategory GetItemCategoryFromItemComponent(UBag_ItemComponent* ItemComponent);
 };
