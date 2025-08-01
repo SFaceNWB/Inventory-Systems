@@ -14,6 +14,7 @@
 #include "Items/Fragments/Bag_ItemFragment.h"
 #include "Items/Manifest/Bag_ItemManifest.h"
 #include "Widgets/Inventory/GridSlots/Bag_GridSlot.h"
+#include "Widgets/Inventory/SlottedItems/Bag_SlottedItem.h"
 #include "Widgets/Utils/Bag_WidgetUtils.h"
 
 void UBag_InventoryGrid::NativeOnInitialized()
@@ -52,15 +53,66 @@ FBag_SlotAvailabilityResult UBag_InventoryGrid::HasRoomForItem(const FBag_ItemMa
 
 void UBag_InventoryGrid::AddItemToIndices(const FBag_SlotAvailabilityResult& Result, UBag_InventoryItem* NewItem)
 {
-	const FBag_GridFragment* GridFragment = GetFragment<FBag_GridFragment>(NewItem, FragmentTags::GridFragment);
-	const FBag_ImageFragment* ImageFragment = GetFragment<FBag_ImageFragment>(NewItem, FragmentTags::IconFragment);
+	for (const auto& Availability : Result.SlotAvailabilities)
+	{
+		AddItemAtIndex(NewItem, Availability.Index, Result.bStackable, Availability.AmountToFill);
+	}
+	
+}
+
+FVector2D UBag_InventoryGrid::GetDrawSize(const FBag_GridFragment* GridFragment) const
+{
+	const float IconTileWidth = TileSize - GridFragment->GetGridPadding() * 2;
+	return GridFragment->GetGridSize() * IconTileWidth;
+}
+
+void UBag_InventoryGrid::SetSlottedItemImage(const UBag_SlottedItem* SlottedItem, const FBag_GridFragment* GridFragment,
+	const FBag_ImageFragment* ImageFragment) const
+{
+	FSlateBrush Brush;
+	Brush.SetResourceObject(ImageFragment->GetIcon());
+	Brush.DrawAs = ESlateBrushDrawType::Image;
+	Brush.ImageSize = GetDrawSize(GridFragment);
+	SlottedItem->SetImageBrush(Brush);
+}
+
+void UBag_InventoryGrid::AddItemAtIndex(UBag_InventoryItem* Item, const int32 Index, const bool bStackable,
+	const int32 StackAmount)
+{
+	const FBag_GridFragment* GridFragment = GetFragment<FBag_GridFragment>(Item, FragmentTags::GridFragment);
+	const FBag_ImageFragment* ImageFragment = GetFragment<FBag_ImageFragment>(Item, FragmentTags::IconFragment);
 	if (!GridFragment || !ImageFragment)
 	{
 		return;
 	}
-	// 创建一个小部件并添加到网格中
-	// 存放新的部件在一个容器中
+	UBag_SlottedItem* SlottedItem = CreateSlottedItem(Item, bStackable, StackAmount, GridFragment, ImageFragment, Index);
+	AddSlottedItemToCanvas(Index, GridFragment, SlottedItem);
+	SlottedItems.Add(Index, SlottedItem);
 }
+
+UBag_SlottedItem* UBag_InventoryGrid::CreateSlottedItem(UBag_InventoryItem* Item, const bool bStackable,
+	const int32 StackAmount, const FBag_GridFragment* GridFragment, const FBag_ImageFragment* ImageFragment,
+	const int32 Index)
+{
+	UBag_SlottedItem* SlottedItem = CreateWidget<UBag_SlottedItem>(GetOwningPlayer(), SlottedItemClass);
+	SlottedItem->SetInventoryItem(Item);
+	SetSlottedItemImage(SlottedItem, GridFragment, ImageFragment);
+	SlottedItem->SetGridIndex(Index);
+
+	return SlottedItem;
+}
+
+void UBag_InventoryGrid::AddSlottedItemToCanvas(const int32 Index, const FBag_GridFragment* GridFragment,
+	UBag_SlottedItem* SlottedItem) const
+{
+	CanvasPanel->AddChild(SlottedItem);
+	UCanvasPanelSlot* CanvasSlot = UWidgetLayoutLibrary::SlotAsCanvasSlot(SlottedItem);
+	CanvasSlot->SetSize(GetDrawSize(GridFragment));
+	const FVector2D DrawPosition = UBag_WidgetUtils::GetPositionFromIndex(Index, Columns) * TileSize;
+	const FVector2D DrawPositionWithPadding = DrawPosition + FVector2D(GridFragment->GetGridPadding());
+	CanvasSlot->SetPosition(DrawPositionWithPadding);
+}
+
 
 void UBag_InventoryGrid::AddItem(UBag_InventoryItem* Item)
 {
@@ -102,3 +154,4 @@ bool UBag_InventoryGrid::MatchesCategory(const UBag_InventoryItem* Item) const
 {
 	return Item->GetItemManifest().GetItemCategory() == ItemCategory;
 }
+

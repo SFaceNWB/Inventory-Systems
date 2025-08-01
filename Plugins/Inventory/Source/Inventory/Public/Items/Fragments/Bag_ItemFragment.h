@@ -57,6 +57,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	TObjectPtr<UTexture2D> Icon{ nullptr };
 
+	UPROPERTY(EditAnywhere, Category = "Inventory")
 	FVector2D IconDimensions{ 44.0f, 44.0f };
 };
 
