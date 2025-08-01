@@ -61,6 +61,23 @@ private:
 	FVector2D IconDimensions{ 44.0f, 44.0f };
 };
 
+USTRUCT(BlueprintType)
+struct FBag_StackableFragment : public FBag_ItemFragment
+{
+	GENERATED_BODY()
+
+	int32 GetMaxStackSize() const { return MaxStackSize; }
+	int32 GetStackCount() const { return StackCount; }
+
+private:
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	int32 MaxStackSize{ 1 };
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	int32 StackCount{ 1 };
+};
+
 
 
 
