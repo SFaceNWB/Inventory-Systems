@@ -46,7 +46,7 @@ private:
 	void AddItemAtIndex(UBag_InventoryItem* Item, const int32 Index, const bool bStackable, const int32 StackAmount);
 	UBag_SlottedItem* CreateSlottedItem(UBag_InventoryItem* Item, const bool bStackable, const int32 StackAmount, const FBag_GridFragment* GridFragment, const FBag_ImageFragment* ImageFragment, const int32 Index);
 	void AddSlottedItemToCanvas(const int32 Index, const FBag_GridFragment* GridFragment, UBag_SlottedItem* SlottedItem) const;
-	void UpdateGridSlots(UBag_InventoryItem* NewItem, int32 Index);
+	void UpdateGridSlots(UBag_InventoryItem* NewItem, int32 Index, bool bStackableItem, const int32 StackAmount);
 
 	UPROPERTY(EditAnywhere,BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Inventory")
 	EBag_ItemCategory ItemCategory;

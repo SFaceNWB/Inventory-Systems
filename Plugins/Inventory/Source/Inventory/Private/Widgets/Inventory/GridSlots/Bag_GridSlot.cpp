@@ -2,8 +2,14 @@
 
 
 #include "Widgets/Inventory/GridSlots/Bag_GridSlot.h"
+#include "Items/Bag_InventoryItem.h"
 
 #include "Components/Image.h"
+
+void UBag_GridSlot::SetInventoryItem(UBag_InventoryItem* Item)
+{
+	InventoryItem = Item;
+}
 
 void UBag_GridSlot::SetUnOccupiedTexture()
 {
