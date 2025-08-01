@@ -40,19 +40,23 @@ FBag_SlotAvailabilityResult UBag_InventoryGrid::HasRoomForItem(const UBag_Invent
 FBag_SlotAvailabilityResult UBag_InventoryGrid::HasRoomForItem(const FBag_ItemManifest& Manifest)
 {
 	FBag_SlotAvailabilityResult Result;
-	Result.TotalRoomToFill = 1;
-	Result.bStackable = true;
 
-	FBag_SlotAvailability SlotAvailability;
-	SlotAvailability.AmountToFill = 2;
-	SlotAvailability.Index = 0;
-	Result.SlotAvailabilities.Add(MoveTemp(SlotAvailability));
-
-	FBag_SlotAvailability SlotAvailability2;
-	SlotAvailability2.AmountToFill = 5;
-	SlotAvailability2.Index = 1;
-	Result.SlotAvailabilities.Add(MoveTemp(SlotAvailability2));
-
+	// 确认这个物品是否可以叠加
+	// 确认要添加多少堆叠物品。
+	// 对每个网格槽：
+		// 如果没有更多需要填充的空间，跳出循环
+		// 这个索引是否被占用？
+		// 这个物品是否可以放在这里？(是否超出网格边界)
+		// 这个索引是否可以容纳这个物品？
+		// 检查其他重要条件 -- 循环一个二维数组
+			// 索引是否被声明？
+			// 物品是否有效？
+			// 物品是否与添加的物品为同类型？
+			// 如果是，它可以叠加吗？
+			// 如果可以叠加，插槽是否到达最大堆叠数量？
+		// 填充多少？
+		// 更新结果
+	// 剩下数量是多少？
 	return Result;
 }
 
