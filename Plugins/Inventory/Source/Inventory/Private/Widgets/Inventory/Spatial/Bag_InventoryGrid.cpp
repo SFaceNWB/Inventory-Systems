@@ -56,8 +56,8 @@ void UBag_InventoryGrid::AddItemToIndices(const FBag_SlotAvailabilityResult& Res
 	for (const auto& Availability : Result.SlotAvailabilities)
 	{
 		AddItemAtIndex(NewItem, Availability.Index, Result.bStackable, Availability.AmountToFill);
+		UpdateGridSlots(NewItem, Availability.Index);
 	}
-	
 }
 
 FVector2D UBag_InventoryGrid::GetDrawSize(const FBag_GridFragment* GridFragment) const
@@ -111,6 +111,23 @@ void UBag_InventoryGrid::AddSlottedItemToCanvas(const int32 Index, const FBag_Gr
 	const FVector2D DrawPosition = UBag_WidgetUtils::GetPositionFromIndex(Index, Columns) * TileSize;
 	const FVector2D DrawPositionWithPadding = DrawPosition + FVector2D(GridFragment->GetGridPadding());
 	CanvasSlot->SetPosition(DrawPositionWithPadding);
+}
+
+void UBag_InventoryGrid::UpdateGridSlots(UBag_InventoryItem* NewItem, int32 Index)
+{
+	check(GridSlots.IsValidIndex(Index));
+
+	const FBag_GridFragment* GridFragment = GetFragment<FBag_GridFragment>(NewItem, FragmentTags::GridFragment);
+	if (!GridFragment)
+	{
+		return;
+	}
+	const FIntPoint Dimension = GridFragment ? GridFragment->GetGridSize() : FIntPoint(1, 1);
+	UBag_InventoryStatics::ForEach2D(GridSlots, Index, Dimension, Columns, 
+		[](UBag_GridSlot* GridSlot)
+		{
+			GridSlot->SetOccupiedTexture();
+		});
 }
 
 

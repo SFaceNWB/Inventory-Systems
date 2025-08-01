@@ -3,3 +3,28 @@
 
 #include "Widgets/Inventory/GridSlots/Bag_GridSlot.h"
 
+#include "Components/Image.h"
+
+void UBag_GridSlot::SetUnOccupiedTexture()
+{
+	GridSlotState = Ebag_GridSlotState::Unoccupied;
+	Image_GridSlot->SetBrush(Brush_Occupied);
+}
+
+void UBag_GridSlot::SetSelectedTexture()
+{
+	GridSlotState = Ebag_GridSlotState::Selected;
+	Image_GridSlot->SetBrush(Brush_Selected);
+}
+
+void UBag_GridSlot::SetOccupiedTexture()
+{
+	GridSlotState = Ebag_GridSlotState::Occupied;
+	Image_GridSlot->SetBrush(Brush_Occupied);
+}
+
+void UBag_GridSlot::SetGrayedOutTexture()
+{
+	GridSlotState = Ebag_GridSlotState::GrayedOut;
+	Image_GridSlot->SetBrush(Brush_GrayedQut);
+}

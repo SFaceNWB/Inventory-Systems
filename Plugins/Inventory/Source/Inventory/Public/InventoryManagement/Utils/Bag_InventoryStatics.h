@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Items/Manifest/Bag_ItemManifest.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Widgets/Utils/Bag_WidgetUtils.h"
 #include "Bag_InventoryStatics.generated.h"
 
 class UBag_ItemComponent;
@@ -23,4 +24,27 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	static EBag_ItemCategory GetItemCategoryFromItemComponent(UBag_ItemComponent* ItemComponent);
+
+	template<typename T, typename FuncT>
+	static void ForEach2D(TArray<T>& Array, int32 Index, const FIntPoint& Range2D, int32 GridColumns, const FuncT& Function);
 };
+
+
+template<typename T, typename FuncT>
+void UBag_InventoryStatics::ForEach2D(TArray<T>& Array, int32 Index, const FIntPoint& Range2D, int32 GridColumns, const FuncT& Function)
+{
+	for (int32 j = 0; j < Range2D.Y; ++j)
+	{
+		for (int32 i = 0; i < Range2D.X; ++i)
+		{
+			const FIntPoint Coordinates = UBag_WidgetUtils::GetPositionFromIndex(Index, GridColumns) + FIntPoint(i, j);
+			const int32 TileIndex = UBag_WidgetUtils::GetIndexFromPosition(Coordinates, GridColumns);
+			if (Array.IsValidIndex(TileIndex))
+			{
+				Function(Array[TileIndex]);
+			}
+		}
+	}
+}
+
+
