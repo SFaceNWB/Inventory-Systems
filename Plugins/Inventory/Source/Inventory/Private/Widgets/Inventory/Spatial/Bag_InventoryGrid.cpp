@@ -42,21 +42,68 @@ FBag_SlotAvailabilityResult UBag_InventoryGrid::HasRoomForItem(const FBag_ItemMa
 	FBag_SlotAvailabilityResult Result;
 
 	// 确认这个物品是否可以叠加
+	const FBag_StackableFragment* StackableFragment = Manifest.GetFragmentOfType<FBag_StackableFragment>();
+	Result.bStackable = StackableFragment != nullptr;
+
 	// 确认要添加多少堆叠物品。
+	const int32 MaxStackSize = StackableFragment ? StackableFragment->GetMaxStackSize() : 1;
+	int32 AmountToFill = StackableFragment ? StackableFragment->GetStackCount() : 1;
+
+	TSet<int32> CheckIndices;
 	// 对每个网格槽：
-		// 如果没有更多需要填充的空间，跳出循环
+	for (const auto& GridSlot : GridSlots)
+	{
+		// 如果没有更多需要填充的物品，跳出循环
+		if (AmountToFill == 0)
+		{
+			break;
+		}
+
 		// 这个索引是否被占用？
-		// 这个物品是否可以放在这里？(是否超出网格边界)
-		// 这个索引是否可以容纳这个物品？
-		// 检查其他重要条件 -- 循环一个二维数组
-			// 索引是否被声明？
-			// 物品是否有效？
-			// 物品是否与添加的物品为同类型？
-			// 如果是，它可以叠加吗？
-			// 如果可以叠加，插槽是否到达最大堆叠数量？
+		if (IsIndexClaimed(CheckIndices, GridSlot->GetIndex()))
+		{
+			continue;
+		}
+		// 是否超出网格边界
+		if (!IsInGridBounds(GridSlot->GetIndex(), GetItemDimensions(Manifest)))
+		{
+			continue;
+		}
+
+		// 这个物品是否可以放在这里？
+		TSet<int32> TentativelyClaimed;
+		if (!HasRoomAtIndex(GridSlot, GetItemDimensions(Manifest), CheckIndices, TentativelyClaimed, Manifest.GetItemType(), MaxStackSize))
+		{
+			continue;
+		}
+
 		// 填充多少？
-		// 更新结果
-	// 剩下数量是多少？
+		const int32 AmountToFillInSlot = DetermineFillAmoutForSlot(Result.bStackable, MaxStackSize, AmountToFill, GridSlot);
+		if (AmountToFillInSlot == 0)
+		{
+			continue;
+		}
+		CheckIndices.Append(TentativelyClaimed);
+
+		// 更新填充数量
+		Result.TotalRoomToFill += AmountToFillInSlot;
+		Result.SlotAvailabilities.Emplace(
+			FBag_SlotAvailability
+			{
+				HasValidItem(GridSlot) ? GridSlot->GetUpperLeftIndex() : GridSlot->GetIndex(),
+				Result.bStackable ? AmountToFillInSlot : 0,
+				HasValidItem(GridSlot)
+			});
+
+		AmountToFill -= AmountToFillInSlot;
+
+		// 剩下数量是多少？
+		Result.Remainder = AmountToFill;
+		if (AmountToFill == 0)
+		{
+			return Result;
+		}
+	}
 	return Result;
 }
 
@@ -145,6 +192,132 @@ void UBag_InventoryGrid::UpdateGridSlots(UBag_InventoryItem* NewItem, int32 Inde
 			GridSlot->SetOccupiedTexture();
 			GridSlot->SetAvailable(false);
 		});
+}
+
+bool UBag_InventoryGrid::IsIndexClaimed(const TSet<int32>& CheckIndices, const int32 Index) const
+{
+	return CheckIndices.Contains(Index);
+}
+
+bool UBag_InventoryGrid::HasRoomAtIndex(const UBag_GridSlot* GridSlot, const FIntPoint& Dimension, 
+	const TSet<int32>& CheckIndices, TSet<int32>& OutTentativelyClaimed, const FGameplayTag& ItemType, 
+	const int32 MaxStackSize)
+{
+	// 这个索引是否可以容纳这个物品？
+	bool bHasRoomAtIndex = true;
+
+	UBag_InventoryStatics::ForEach2D(GridSlots, GridSlot->GetIndex(), Dimension, Columns,
+		[&](const UBag_GridSlot* SubGridSlot)
+		{
+			// 检查其他重要条件 -- 循环一个二维数组
+			if (CheckSlotConstraints(GridSlot ,SubGridSlot, CheckIndices, OutTentativelyClaimed, ItemType, MaxStackSize))
+			{
+				OutTentativelyClaimed.Add(SubGridSlot->GetIndex());
+			}
+			else
+			{
+				bHasRoomAtIndex = false;
+			}
+		});
+
+	return bHasRoomAtIndex;
+}
+
+FIntPoint UBag_InventoryGrid::GetItemDimensions(const FBag_ItemManifest& Manifest) const
+{
+	const FBag_GridFragment* GridFragment = Manifest.GetFragmentOfType<FBag_GridFragment>();
+	return GridFragment ? GridFragment->GetGridSize() : FIntPoint(1, 1);
+}
+
+bool UBag_InventoryGrid::CheckSlotConstraints(const UBag_GridSlot* GridSlot, const UBag_GridSlot* SubGridSlot, 
+	const TSet<int32>& CheckIndices, TSet<int32>& OutTentativelyClaimed, const FGameplayTag& ItemType, 
+	const int32 MaxStackSize) const
+{
+	// 索引是否被声明？
+	if (IsIndexClaimed(CheckIndices, SubGridSlot->GetIndex()))
+	{
+		return false;
+	}
+
+	// 物品是否有效？
+	if (!HasValidItem(SubGridSlot))
+	{
+		OutTentativelyClaimed.Add(SubGridSlot->GetIndex());
+		return true;
+	}
+
+	// 这个网格插槽是否是左上角的索引第一个插槽
+	if (!IsUpperLeftSlot(GridSlot, SubGridSlot))
+	{
+		return false;
+	}
+
+	// 物品是否与添加的物品为同类型？
+	const UBag_InventoryItem* SubItem = SubGridSlot->GetInventoryItem().Get();
+	if (!SubItem->IsStackable())
+	{
+		return false;
+	}
+
+	// 如果是，它可以叠加吗？
+	if (!DoesItemTypeMatch(SubItem, ItemType))
+	{
+		return false;
+	}
+
+	// 如果可以叠加，插槽是否到达最大堆叠数量？
+	if (GridSlot->GetStackCount() >= MaxStackSize)
+	{
+		return false;
+	}
+	return true;
+}
+
+bool UBag_InventoryGrid::HasValidItem(const UBag_GridSlot* GridSlot) const
+{
+	return GridSlot->GetInventoryItem().IsValid();
+}
+
+bool UBag_InventoryGrid::IsUpperLeftSlot(const UBag_GridSlot* GridSlot, const UBag_GridSlot* SubGridSlot) const
+{
+	return SubGridSlot->GetUpperLeftIndex() == GridSlot->GetIndex();
+}
+
+bool UBag_InventoryGrid::DoesItemTypeMatch(const UBag_InventoryItem* SubItem, const FGameplayTag& ItemType) const
+{
+	return SubItem->GetItemManifest().GetItemType().MatchesTagExact(ItemType);
+}
+
+bool UBag_InventoryGrid::IsInGridBounds(const int32 StartIndex, const FIntPoint& ItemDimensions) const
+{
+	if (StartIndex < 0 || StartIndex >= GridSlots.Num())
+	{
+		return false;
+	}
+	const int32 EndColumn = (StartIndex % Columns) + ItemDimensions.X;
+	const int32 EndRow = (StartIndex / Columns) + ItemDimensions.Y;
+	return EndColumn <= Columns && EndRow <= Rows;
+}
+
+int32 UBag_InventoryGrid::DetermineFillAmoutForSlot(const bool bStackable, const int32 MaxStackSize,
+	const int32 AmountToFill, const UBag_GridSlot* GridSlot) const
+{
+	// 计算插槽的空间
+	const int32 RoomInSlot = MaxStackSize - GetStackAmount(GridSlot);
+	// 如果可以堆叠，计算填充数量和插槽空间的最小值
+	return bStackable ? FMath::Min(RoomInSlot, AmountToFill) : 1;
+}
+
+int32 UBag_InventoryGrid::GetStackAmount(const UBag_GridSlot* GridSlot) const
+{
+	int32 CurrentSlotStackCount = GridSlot->GetStackCount();
+	// 如果处于一个不可堆叠的插槽，获取实际的可堆叠计数的插槽
+	if (const int32 UpperLeftIndex = GridSlot->GetUpperLeftIndex(); UpperLeftIndex != INDEX_NONE)
+	{
+		UBag_GridSlot* UpperLeftGridSlot = GridSlots[UpperLeftIndex];
+		CurrentSlotStackCount = UpperLeftGridSlot->GetStackCount();
+	}
+	return CurrentSlotStackCount;
 }
 
 

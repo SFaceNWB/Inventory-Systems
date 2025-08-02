@@ -20,6 +20,7 @@ public:
 	void SetItemManifest(const FBag_ItemManifest& Manifest);
 	const FBag_ItemManifest& GetItemManifest() const { return ItemManifest.Get<FBag_ItemManifest>(); }
 	FBag_ItemManifest& GetItemManifestMutable() { return ItemManifest.GetMutable<FBag_ItemManifest>(); }
+	bool IsStackable() const;
 private:
 
 	UPROPERTY(VisibleAnywhere, meta = (BaseStruct = "/Script/Inventory.Bag_ItemManifest"), Replicated)

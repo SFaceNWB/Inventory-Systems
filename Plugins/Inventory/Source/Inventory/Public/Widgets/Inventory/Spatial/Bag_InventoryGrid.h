@@ -8,6 +8,7 @@
 
 #include "Bag_InventoryGrid.generated.h"
 
+struct FGameplayTag;
 struct FBag_ImageFragment;
 struct FBag_GridFragment;
 class UBag_SlottedItem;
@@ -47,6 +48,16 @@ private:
 	UBag_SlottedItem* CreateSlottedItem(UBag_InventoryItem* Item, const bool bStackable, const int32 StackAmount, const FBag_GridFragment* GridFragment, const FBag_ImageFragment* ImageFragment, const int32 Index);
 	void AddSlottedItemToCanvas(const int32 Index, const FBag_GridFragment* GridFragment, UBag_SlottedItem* SlottedItem) const;
 	void UpdateGridSlots(UBag_InventoryItem* NewItem, int32 Index, bool bStackableItem, const int32 StackAmount);
+	bool IsIndexClaimed(const TSet<int32>& CheckIndices, const int32 Index) const;
+	bool HasRoomAtIndex(const UBag_GridSlot* GridSlot, const FIntPoint& Dimension, const TSet<int32>& CheckIndices, TSet<int32>& OutTentativelyClaimed, const FGameplayTag& ItemType, const int32 MaxStackSize);
+	FIntPoint GetItemDimensions(const FBag_ItemManifest& Manifest) const;
+	bool CheckSlotConstraints(const UBag_GridSlot* GridSlot, const UBag_GridSlot* SubGridSlot, const TSet<int32>& CheckIndices, TSet<int32>& OutTentativelyClaimed, const FGameplayTag& ItemType, const int32 MaxStackSize) const;
+	bool HasValidItem(const UBag_GridSlot* GridSlot) const;
+	bool IsUpperLeftSlot(const UBag_GridSlot* GridSlot, const UBag_GridSlot* SubGridSlot) const;
+	bool DoesItemTypeMatch(const UBag_InventoryItem* SubItem, const FGameplayTag& ItemType) const;
+	bool IsInGridBounds(const int32 StartIndex, const FIntPoint& ItemDimensions) const;
+	int32 DetermineFillAmoutForSlot(const bool bStackable, const int32 MaxStackSize, const int32 AmountToFill, const UBag_GridSlot* GridSlot) const;
+	int32 GetStackAmount(const UBag_GridSlot* GridSlot) const;
 
 	UPROPERTY(EditAnywhere,BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Inventory")
 	EBag_ItemCategory ItemCategory;

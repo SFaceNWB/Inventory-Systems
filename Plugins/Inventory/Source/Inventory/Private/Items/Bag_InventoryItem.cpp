@@ -3,6 +3,7 @@
 
 #include "Items/Bag_InventoryItem.h"
 
+#include "Items/Fragments/Bag_ItemFragment.h"
 #include "Net/UnrealNetwork.h"
 
 void UBag_InventoryItem::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -15,4 +16,10 @@ void UBag_InventoryItem::GetLifetimeReplicatedProps(TArray<class FLifetimeProper
 void UBag_InventoryItem::SetItemManifest(const FBag_ItemManifest& Manifest)
 {
 	ItemManifest = FInstancedStruct::Make<FBag_ItemManifest>(Manifest);
+}
+
+bool UBag_InventoryItem::IsStackable() const
+{
+	const FBag_StackableFragment* Stackable = GetItemManifest().GetFragmentOfType<FBag_StackableFragment>();
+	return Stackable != nullptr;
 }
