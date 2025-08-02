@@ -7,6 +7,7 @@
 
 #include "Bag_FastArray.generated.h"
 
+struct FGameplayTag;
 class UBag_ItemComponent;
 class UBag_InventoryComponent;
 class UBag_InventoryItem;
@@ -50,6 +51,7 @@ struct FBag_InventoryFastArray : public FFastArraySerializer
 	UBag_InventoryItem* AddEntry(UBag_ItemComponent* ItemComponent);
 	UBag_InventoryItem* AddEntry(UBag_InventoryItem* Item);
 	void RemoveEntry(UBag_InventoryItem* Item);
+	UBag_InventoryItem* FindFirstItemByType(const FGameplayTag& ItemType);
 
 private:
 	friend UBag_InventoryComponent;

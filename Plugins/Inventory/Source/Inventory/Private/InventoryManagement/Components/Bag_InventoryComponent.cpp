@@ -3,8 +3,10 @@
 
 #include "InventoryManagement/Components/Bag_InventoryComponent.h"
 
+#include "Items/Components/Bag_ItemComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Widgets/Inventory/InventoryBase/Bag_InventoryBase.h"
+#include "Items/Bag_InventoryItem.h"
 
 UBag_InventoryComponent::UBag_InventoryComponent()
 	:InventoryList(this)
@@ -25,6 +27,9 @@ void UBag_InventoryComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeP
 void UBag_InventoryComponent::TryAddItem(UBag_ItemComponent* ItemComponent)
 {
 	FBag_SlotAvailabilityResult Result = InventoryMenu->HasRoomForItem(ItemComponent);
+
+	UBag_InventoryItem* FoundItem = InventoryList.FindFirstItemByType(ItemComponent->GetItemManifest().GetItemType());
+	Result.Item = FoundItem;
 
 	if (Result.TotalRoomToFill == 0)
 	{
