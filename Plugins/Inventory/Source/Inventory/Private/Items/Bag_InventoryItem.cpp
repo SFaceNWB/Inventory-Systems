@@ -11,6 +11,7 @@ void UBag_InventoryItem::GetLifetimeReplicatedProps(TArray<class FLifetimeProper
 	UObject::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ThisClass, ItemManifest);
+	DOREPLIFETIME(ThisClass, TotalStackCount);
 }
 
 void UBag_InventoryItem::SetItemManifest(const FBag_ItemManifest& Manifest)

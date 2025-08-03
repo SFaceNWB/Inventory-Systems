@@ -29,6 +29,9 @@ struct INVENTORY_API FBag_ItemManifest
 	template<typename T> requires std::derived_from<T, FBag_ItemFragment>
 	const T* GetFragmentOfType() const;
 
+	template<typename T> requires std::derived_from<T, FBag_ItemFragment>
+	T* GetFragmentOfTypeMutable();
+
 private:
 
 	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (ExcludeBaseStruct))
@@ -42,8 +45,7 @@ private:
 };
 
 
-template<typename T>
-requires std::derived_from<T, FBag_ItemFragment>
+template<typename T> requires std::derived_from<T, FBag_ItemFragment>
 const T* FBag_ItemManifest::GetFragmentOfTypeWithTag(const FGameplayTag& FragmentTag) const
 {
 	for (const TInstancedStruct<FBag_ItemFragment>& Fragment : Fragments)
@@ -60,13 +62,25 @@ const T* FBag_ItemManifest::GetFragmentOfTypeWithTag(const FGameplayTag& Fragmen
 	return nullptr;
 }
 
-template <typename T>
-requires std::derived_from<T, FBag_ItemFragment>
+template <typename T> requires std::derived_from<T, FBag_ItemFragment>
 const T* FBag_ItemManifest::GetFragmentOfType() const
 {
 	for (const TInstancedStruct<FBag_ItemFragment>& Fragment : Fragments)
 	{
 		if (const T* FragmentPtr = Fragment.GetPtr<T>())
+		{
+			return FragmentPtr;
+		}
+	}
+	return nullptr;
+}
+
+template <typename T> requires std::derived_from<T, FBag_ItemFragment>
+T* FBag_ItemManifest::GetFragmentOfTypeMutable()
+{
+	for (TInstancedStruct<FBag_ItemFragment>& Fragment : Fragments)
+	{
+		if (T* FragmentPtr = Fragment.GetMutablePtr<T>())
 		{
 			return FragmentPtr;
 		}

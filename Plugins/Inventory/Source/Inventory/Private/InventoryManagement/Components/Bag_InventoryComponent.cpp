@@ -7,6 +7,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Widgets/Inventory/InventoryBase/Bag_InventoryBase.h"
 #include "Items/Bag_InventoryItem.h"
+#include "Items/Fragments/Bag_ItemFragment.h"
 
 UBag_InventoryComponent::UBag_InventoryComponent()
 	:InventoryList(this)
@@ -40,6 +41,7 @@ void UBag_InventoryComponent::TryAddItem(UBag_ItemComponent* ItemComponent)
 	if (Result.Item.IsValid() && Result.bStackable)
 	{
 		// 向背包中添加已经存在的物品添加堆叠数量
+		OnStackChange.Broadcast(Result);
 		Server_AddStacksToItem(ItemComponent, Result.TotalRoomToFill, Result.Remainder);
 	}
 	else if (Result.TotalRoomToFill > 0)
@@ -52,19 +54,36 @@ void UBag_InventoryComponent::TryAddItem(UBag_ItemComponent* ItemComponent)
 void UBag_InventoryComponent::Server_AddNewItem_Implementation(UBag_ItemComponent* ItemComponent, int32 StackCount)
 {
 	UBag_InventoryItem* NewItem = InventoryList.AddEntry(ItemComponent);
+	NewItem->SetTotalStackCount(StackCount);
 
 	if (GetOwner()->GetNetMode() == NM_ListenServer || GetOwner()->GetNetMode() == NM_Standalone)
 	{
 		OnItemAdded.Broadcast(NewItem);
 	}
 
-	// TODO: 让物品组件销毁它的拥有者
+	ItemComponent->PickedUp();
 }
 
 void UBag_InventoryComponent::Server_AddStacksToItem_Implementation(UBag_ItemComponent* ItemComponent, int32 StackCount,
 	int32 Remainder)
 {
+	const FGameplayTag& ItemType = IsValid(ItemComponent) ? ItemComponent->GetItemManifest().GetItemType() : FGameplayTag::EmptyTag;
+	UBag_InventoryItem* Item = InventoryList.FindFirstItemByType(ItemType);
+	if (!IsValid(Item))
+	{
+		return;
+	}
 
+	Item->SetTotalStackCount(Item->GetTotalStackCount() + StackCount);
+
+	if (Remainder == 0)
+	{
+		ItemComponent->PickedUp();
+	}
+	else if (FBag_StackableFragment* StackableFragment = ItemComponent->GetItemManifest().GetFragmentOfTypeMutable<FBag_StackableFragment>())
+	{
+		StackableFragment->SetStackCount(Remainder);
+	}
 }
 
 void UBag_InventoryComponent::ToggleInventoryMenu()

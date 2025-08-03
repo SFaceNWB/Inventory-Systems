@@ -18,3 +18,9 @@ void UBag_ItemComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProper
 
 	DOREPLIFETIME(ThisClass, ItemManifest);
 }
+
+void UBag_ItemComponent::PickedUp()
+{
+	OnPickedUp();
+	GetOwner()->Destroy();
+}

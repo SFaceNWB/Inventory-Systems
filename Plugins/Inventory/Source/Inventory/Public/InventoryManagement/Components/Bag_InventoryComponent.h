@@ -8,12 +8,14 @@
 #include "Bag_InventoryComponent.generated.h"
 
 
+struct FBag_SlotAvailabilityResult;
 class UBag_ItemComponent;
 class UBag_InventoryItem;
 class UBag_InventoryBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemChange, UBag_InventoryItem*, Item);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FNoRoomInInventory);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStackChange, const FBag_SlotAvailabilityResult&, Result);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable )
 class INVENTORY_API UBag_InventoryComponent : public UActorComponent
@@ -40,6 +42,7 @@ public:
 	FInventoryItemChange OnItemAdded;
 	FInventoryItemChange OnItemRemoved;
 	FNoRoomInInventory NoRoomInInventory;
+	FStackChange OnStackChange;
 protected:
 	virtual void BeginPlay() override;
 

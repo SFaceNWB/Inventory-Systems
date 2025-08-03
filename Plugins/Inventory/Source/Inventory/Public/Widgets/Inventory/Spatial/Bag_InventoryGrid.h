@@ -59,6 +59,9 @@ private:
 	int32 DetermineFillAmoutForSlot(const bool bStackable, const int32 MaxStackSize, const int32 AmountToFill, const UBag_GridSlot* GridSlot) const;
 	int32 GetStackAmount(const UBag_GridSlot* GridSlot) const;
 
+	UFUNCTION()
+	void AddStacks(const FBag_SlotAvailabilityResult& Result);
+
 	UPROPERTY(EditAnywhere,BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Inventory")
 	EBag_ItemCategory ItemCategory;
 
