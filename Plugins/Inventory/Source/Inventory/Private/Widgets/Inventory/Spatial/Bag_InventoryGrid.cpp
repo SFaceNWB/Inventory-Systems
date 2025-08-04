@@ -3,6 +3,7 @@
 
 #include "Widgets/Inventory/Spatial/Bag_InventoryGrid.h"
 
+#include "Inventory.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
@@ -27,6 +28,21 @@ void UBag_InventoryGrid::NativeOnInitialized()
 	InventoryComponent = UBag_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
 	InventoryComponent->OnItemAdded.AddDynamic(this, &ThisClass::AddItem);
 	InventoryComponent->OnStackChange.AddDynamic(this, &ThisClass::AddStacks);
+}
+
+void UBag_InventoryGrid::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	const FVector2D CanvasPosition = UBag_WidgetUtils::GetWidgetPosition(CanvasPanel);
+	const FVector2D MousePosition = UWidgetLayoutLibrary::GetMousePositionOnViewport(GetOwningPlayer());
+
+	if (CursorExitedCanvas(CanvasPosition, UBag_WidgetUtils::GetWidgetSize(CanvasPanel), MousePosition))
+	{
+		return;
+	}
+
+	UpdateTileParameters(CanvasPosition, MousePosition);
 }
 
 FBag_SlotAvailabilityResult UBag_InventoryGrid::HasRoomForItem(const UBag_ItemComponent* ItemComponent)
@@ -403,6 +419,240 @@ void UBag_InventoryGrid::RemoveItemFromGrid(UBag_InventoryItem* InventoryItem, c
 		SlottedItems.RemoveAndCopyValue(GridIndex, FoundSlottedItem);
 		FoundSlottedItem->RemoveFromParent();
 	}
+}
+
+void UBag_InventoryGrid::UpdateTileParameters(const FVector2D& CanvasPosition, const FVector2D& MousePosition)
+{
+	// 如果鼠标不在画布上，返回
+	if (!bMouseWithinCanvas)
+	{
+		return;
+	}
+
+	// 计算瓷砖象限
+	const FIntPoint HoveredCoordinates = CalculateHoveredCoordinates(CanvasPosition,MousePosition);
+
+	LastTileParameters = TileParameters;
+	TileParameters.TileCoordinates = HoveredCoordinates;
+	TileParameters.TileIndex = UBag_WidgetUtils::GetIndexFromPosition(HoveredCoordinates, Columns);
+	TileParameters.TileQuadrant = CalculateTileQuadrant(CanvasPosition, MousePosition);
+
+	// 控制高亮/不高亮网格槽
+	OnTileParametersUpdate(TileParameters);
+}
+
+FIntPoint UBag_InventoryGrid::CalculateHoveredCoordinates(const FVector2D& CanvasPosition,
+	const FVector2D& MousePosition) const
+{
+	return  FIntPoint{
+		static_cast<int32>(FMath::FloorToInt((MousePosition.X - CanvasPosition.X) / TileSize)),
+		static_cast<int32>(FMath::FloorToInt((MousePosition.Y - CanvasPosition.Y) / TileSize))
+	};
+}
+
+EBag_TileQuadrant UBag_InventoryGrid::CalculateTileQuadrant(const FVector2D& CanvasPosition,
+	const FVector2D& MousePosition) const
+{
+	// 计算瓦片中的相对位置
+	const float TileLocalX = FMath::Fmod(MousePosition.X - CanvasPosition.X, TileSize);
+	const float TileLocalY = FMath::Fmod(MousePosition.Y - CanvasPosition.Y, TileSize);
+
+	// 确定鼠标处于哪个象限
+	const bool bIsTop = TileLocalY < TileSize / 2;
+	const bool bIsLeft = TileLocalX < TileSize / 2;
+
+	EBag_TileQuadrant HoveredTileQuadrant{EBag_TileQuadrant::None};
+	if (bIsTop && bIsLeft)
+	{
+		HoveredTileQuadrant = EBag_TileQuadrant::TopLeft;
+	}
+	else if (bIsTop && !bIsLeft)
+	{
+		HoveredTileQuadrant = EBag_TileQuadrant::TopRight;
+	}
+	else if (!bIsTop && bIsLeft)
+	{
+		HoveredTileQuadrant = EBag_TileQuadrant::BottomLeft;
+	}
+	else if (!bIsTop && !bIsLeft)
+	{
+		HoveredTileQuadrant = EBag_TileQuadrant::BottomRight;
+	}
+
+	return HoveredTileQuadrant;
+}
+
+void UBag_InventoryGrid::OnTileParametersUpdate(const FBag_TileParameters& Parameters)
+{
+	if (!IsValid(HoverItem))
+	{
+		return;
+	}
+
+	// 获取鼠标悬停物品的尺寸
+	const FIntPoint Dimensions = HoverItem->GetGridDimensions();
+	// 计算高亮的起始坐标
+	const FIntPoint StartingCoordinate = CalculateStartingCoordinate(Parameters.TileCoordinates, Dimensions, Parameters.TileQuadrant);
+	ItemDropIndex = UBag_WidgetUtils::GetIndexFromPosition(StartingCoordinate, Columns);
+
+	// 检查悬停坐标
+	CurrentQueryResult = CheckHoverPosition(StartingCoordinate, Dimensions);
+	if (CurrentQueryResult.bHasSpace)
+	{
+		HighlightSlots(ItemDropIndex, Dimensions);
+		return;
+	}
+	UnHighlightSlots(LastHighlightedIndex, LastHighlightedDimensions);
+
+	if (CurrentQueryResult.ValidItem.IsValid() && GridSlots.IsValidIndex(CurrentQueryResult.UpperLeftIndex))
+	{
+		// 只有一个物品在这个空间内，可以交换或添加堆叠。
+		const FBag_GridFragment* GridFragment = GetFragment<FBag_GridFragment>(CurrentQueryResult.ValidItem.Get(), FragmentTags::GridFragment);
+		if (!GridFragment)
+		{
+			return;
+		}
+		ChangeHoverType(CurrentQueryResult.UpperLeftIndex, GridFragment->GetGridSize(), Ebag_GridSlotState::GrayedOut);
+	}
+}
+
+FIntPoint UBag_InventoryGrid::CalculateStartingCoordinate(const FIntPoint& Coordinate, const FIntPoint& Dimensions,
+	const EBag_TileQuadrant Quadrant) const
+{
+	const int32 HasEventWidth = Dimensions.X % 2 == 0 ? 1 : 0;
+	const int32 HasEventHeight = Dimensions.Y % 2 == 0 ? 1 : 0;
+
+	FIntPoint StartingCoordinate;
+	switch (Quadrant)
+	{
+	case EBag_TileQuadrant::TopLeft:
+		StartingCoordinate.X = Coordinate.X - FMath::FloorToInt(0.5f * Dimensions.X);
+		StartingCoordinate.Y = Coordinate.Y - FMath::FloorToInt(0.5f * Dimensions.Y);
+		break;
+	case EBag_TileQuadrant::TopRight:
+		StartingCoordinate.X = Coordinate.X - FMath::FloorToInt(0.5f * Dimensions.X) + HasEventWidth;
+		StartingCoordinate.Y = Coordinate.Y - FMath::FloorToInt(0.5f * Dimensions.Y);
+		break;
+	case EBag_TileQuadrant::BottomLeft:
+		StartingCoordinate.X = Coordinate.X - FMath::FloorToInt(0.5f * Dimensions.X);
+		StartingCoordinate.Y = Coordinate.Y - FMath::FloorToInt(0.5f * Dimensions.Y) + HasEventHeight;
+		break;
+	case EBag_TileQuadrant::BottomRight:
+		StartingCoordinate.X = Coordinate.X - FMath::FloorToInt(0.5f * Dimensions.X) + HasEventWidth;
+		StartingCoordinate.Y = Coordinate.Y - FMath::FloorToInt(0.5f * Dimensions.Y) + HasEventHeight;
+		break;
+	default:
+		UE_LOG(LogInventory, Error, TEXT("Invalid Quadrant."));
+		return  FIntPoint(-1, -1);
+	}
+	return StartingCoordinate;
+}
+
+Fbag_SpaceQueryResult UBag_InventoryGrid::CheckHoverPosition(const FIntPoint& Position,
+	const FIntPoint& Dimensions)
+{
+	Fbag_SpaceQueryResult Result;
+
+	// 是否在网格范围内？
+	if (!IsInGridBounds(UBag_WidgetUtils::GetIndexFromPosition(Position, Columns), Dimensions))
+	{
+		return Result;
+	}
+	Result.bHasSpace = true;
+
+	// 如果多个索引被同一项占用, 检查是否有相同的左上角索引
+	TSet<int32> OccupiedUpperLeftIndices;
+	UBag_InventoryStatics::ForEach2D(GridSlots, UBag_WidgetUtils::GetIndexFromPosition(Position, Columns), Dimensions, Columns,
+		[&](const UBag_GridSlot* GridSlot)
+		{
+			if (GridSlot->GetInventoryItem().IsValid())
+			{
+				OccupiedUpperLeftIndices.Add(GridSlot->GetUpperLeftIndex());
+				Result.bHasSpace = false;
+			}
+		});
+
+	// 如果有，是否只有一个障碍物？(可以交换吗?)
+	if (OccupiedUpperLeftIndices.Num() == 1)
+	{
+		const int32 Index = *OccupiedUpperLeftIndices.CreateConstIterator();
+		Result.ValidItem = GridSlots[Index]->GetInventoryItem();
+		Result.UpperLeftIndex = GridSlots[Index]->GetUpperLeftIndex();
+	}
+	return Result;
+}
+
+bool UBag_InventoryGrid::CursorExitedCanvas(const FVector2D& BoundaryPosition, const FVector2D& BoundarySize,
+	const FVector2D& Location)
+{
+	bLastMouseWithinCanvas = bMouseWithinCanvas;
+	bMouseWithinCanvas = UBag_WidgetUtils::IsWithBounds(BoundaryPosition, BoundarySize,Location);
+	if (!bMouseWithinCanvas && bLastMouseWithinCanvas)
+	{
+		UnHighlightSlots(LastHighlightedIndex, LastHighlightedDimensions);
+		return true;
+	}
+	return false;
+}
+
+void UBag_InventoryGrid::HighlightSlots(const int32 Index, const FIntPoint& Dimensions)
+{
+	if (!bMouseWithinCanvas)
+	{
+		return;
+	}
+	UnHighlightSlots(LastHighlightedIndex, LastHighlightedDimensions);
+	UBag_InventoryStatics::ForEach2D(GridSlots, Index, Dimensions, Columns,
+		[&](UBag_GridSlot* GridSlot)
+		{
+			GridSlot->SetOccupiedTexture();
+		});
+	LastHighlightedDimensions = Dimensions;
+	LastHighlightedIndex = Index;
+}
+
+void UBag_InventoryGrid::UnHighlightSlots(const int32 Index, const FIntPoint& Dimensions)
+{
+	UBag_InventoryStatics::ForEach2D(GridSlots, Index, Dimensions, Columns,
+		[](UBag_GridSlot* GridSlot)
+		{
+			if (GridSlot->IsAvailable())
+			{
+				GridSlot->SetUnOccupiedTexture();
+			}
+			else
+			{
+				GridSlot->SetOccupiedTexture();
+			}
+		});
+}
+
+void UBag_InventoryGrid::ChangeHoverType(const int32 Index, const FIntPoint& Dimensions,
+	Ebag_GridSlotState GridSlotState)
+{
+	UnHighlightSlots(LastHighlightedIndex, LastHighlightedIndex);
+	UBag_InventoryStatics::ForEach2D(GridSlots, Index, Dimensions, Columns,
+		[State = GridSlotState](UBag_GridSlot* GridSlot)
+		{
+			switch (State)
+			{
+			case Ebag_GridSlotState::Occupied:
+				GridSlot->SetOccupiedTexture();
+				break;
+			case Ebag_GridSlotState::Unoccupied:
+				GridSlot->SetUnOccupiedTexture();
+				break;
+			case Ebag_GridSlotState::GrayedOut:
+				GridSlot->SetGrayedOutTexture();
+				break;
+			case Ebag_GridSlotState::Selected:
+				GridSlot->SetSelectedTexture();
+				break;
+			}
+		});
+
+	LastHighlightedIndex = Index;
+	LastHighlightedDimensions = Dimensions;
 }
 
 void UBag_InventoryGrid::AddStacks(const FBag_SlotAvailabilityResult& Result)

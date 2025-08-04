@@ -32,5 +32,5 @@ void UBag_GridSlot::SetOccupiedTexture()
 void UBag_GridSlot::SetGrayedOutTexture()
 {
 	GridSlotState = Ebag_GridSlotState::GrayedOut;
-	Image_GridSlot->SetBrush(Brush_GrayedQut);
+	Image_GridSlot->SetBrush(Brush_GrayedOut);
 }

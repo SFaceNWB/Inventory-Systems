@@ -43,4 +43,49 @@ struct FBag_SlotAvailabilityResult
 	TArray<FBag_SlotAvailability> SlotAvailabilities;
 };
 
+UENUM(BlueprintType)
+enum class EBag_TileQuadrant : uint8
+{
+	TopLeft,
+	TopRight,
+	BottomLeft,
+	BottomRight,
+	None
+};
 
+USTRUCT(BlueprintType)
+struct FBag_TileParameters
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Inventory")
+	FIntPoint TileCoordinates{};
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Inventory")
+	int32 TileIndex{ INDEX_NONE };
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Inventory")
+	EBag_TileQuadrant TileQuadrant{ EBag_TileQuadrant::None };
+
+};
+
+inline bool operator==(const FBag_TileParameters& A, const FBag_TileParameters& B)
+{
+	return A.TileCoordinates == B.TileCoordinates && A.TileIndex == B.TileIndex && A.TileQuadrant == B.TileQuadrant;
+}
+
+
+USTRUCT()
+struct Fbag_SpaceQueryResult
+{
+	GENERATED_BODY()
+
+	// 如果查询的空间没有物品，则为true
+	bool bHasSpace{ false };
+
+	// 如果只有一个物品可以互相交互
+	TWeakObjectPtr<UBag_InventoryItem> ValidItem = nullptr;
+
+	// 如果有有效物品，左上角的索引
+	int32 UpperLeftIndex{ INDEX_NONE };
+};

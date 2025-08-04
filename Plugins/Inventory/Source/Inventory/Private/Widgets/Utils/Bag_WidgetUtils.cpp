@@ -3,6 +3,32 @@
 
 #include "Widgets/Utils/Bag_WidgetUtils.h"
 
+#include "Blueprint/SlateBlueprintLibrary.h"
+#include "Components/Widget.h"
+
+FVector2D UBag_WidgetUtils::GetWidgetPosition(UWidget* Widget)
+{
+	const FGeometry Geometry = Widget->GetCachedGeometry();
+
+	FVector2D PixelPosition;
+	FVector2D ViewportPosition;
+	USlateBlueprintLibrary::LocalToViewport(Widget ,Geometry, USlateBlueprintLibrary::GetLocalTopLeft(Geometry), PixelPosition, ViewportPosition);
+	return ViewportPosition;
+}
+
+FVector2D UBag_WidgetUtils::GetWidgetSize(UWidget* Widget)
+{
+	const FGeometry Geometry = Widget->GetCachedGeometry();
+	return Geometry.GetLocalSize();
+}
+
+bool UBag_WidgetUtils::IsWithBounds(const FVector2D& BoundaryPosition, const FVector2D& WidgetSize,
+                                    const FVector2D& MousePosition)
+{
+	return MousePosition.X >= BoundaryPosition.X && MousePosition.X <= BoundaryPosition.X + WidgetSize.X &&
+		MousePosition.Y >= BoundaryPosition.Y && MousePosition.Y <= BoundaryPosition.Y + WidgetSize.Y;
+}
+
 int32 UBag_WidgetUtils::GetIndexFromPosition(const FIntPoint& Position, const int32 Columns)
 {
 	return  Position.X + Position.Y * Columns;

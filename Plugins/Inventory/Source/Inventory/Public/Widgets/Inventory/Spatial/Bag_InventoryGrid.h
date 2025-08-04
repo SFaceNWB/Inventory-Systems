@@ -8,6 +8,7 @@
 
 #include "Bag_InventoryGrid.generated.h"
 
+enum class Ebag_GridSlotState : uint8;
 class UBag_HoverItem;
 struct FGameplayTag;
 struct FBag_ImageFragment;
@@ -27,6 +28,7 @@ class INVENTORY_API UBag_InventoryGrid : public UUserWidget
 	GENERATED_BODY()
 public:
 	virtual void NativeOnInitialized() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 	EBag_ItemCategory GetItemCategory() const { return ItemCategory; }
 	FBag_SlotAvailabilityResult HasRoomForItem(const UBag_ItemComponent* ItemComponent);
@@ -65,6 +67,16 @@ private:
 	void AssignHoverItem(UBag_InventoryItem* InventoryItem);
 	void AssignHoverItem(UBag_InventoryItem* InventoryItem, const int32 GridIndex, const int32 PreviousGridIndex);
 	void RemoveItemFromGrid(UBag_InventoryItem* InventoryItem, const int32 GridIndex);
+	void UpdateTileParameters(const FVector2D& CanvasPosition, const FVector2D& MousePosition);
+	FIntPoint CalculateHoveredCoordinates(const FVector2D& CanvasPosition, const FVector2D& MousePosition) const;
+	EBag_TileQuadrant CalculateTileQuadrant(const FVector2D& CanvasPosition, const FVector2D& MousePosition) const;
+	void OnTileParametersUpdate(const FBag_TileParameters& Parameters);
+	FIntPoint CalculateStartingCoordinate(const FIntPoint& Coordinate, const FIntPoint& Dimensions, const EBag_TileQuadrant Quadrant) const;
+	Fbag_SpaceQueryResult CheckHoverPosition(const FIntPoint& Position, const FIntPoint& Dimensions);
+	bool CursorExitedCanvas(const FVector2D& BoundaryPosition, const FVector2D& BoundarySize, const FVector2D& Location);
+	void HighlightSlots(const int32 Index, const FIntPoint& Dimensions);
+	void UnHighlightSlots(const int32 Index, const FIntPoint& Dimensions);
+	void ChangeHoverType(const int32 Index, const FIntPoint& Dimensions, Ebag_GridSlotState GridSlotState);
 
 	UFUNCTION()
 	void AddStacks(const FBag_SlotAvailabilityResult& Result);
@@ -104,6 +116,17 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UBag_HoverItem> HoverItem;
+
+	FBag_TileParameters TileParameters;
+	FBag_TileParameters LastTileParameters;
+
+	// 如果在有效位置点击网格，物品应该放置的索引
+	int32 ItemDropIndex{ INDEX_NONE };
+	Fbag_SpaceQueryResult CurrentQueryResult;
+	bool bMouseWithinCanvas;
+	bool bLastMouseWithinCanvas;
+	int32 LastHighlightedIndex;
+	FIntPoint LastHighlightedDimensions;
 };
 
 
