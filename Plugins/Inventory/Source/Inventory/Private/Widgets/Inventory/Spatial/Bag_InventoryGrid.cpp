@@ -16,6 +16,7 @@
 #include "Widgets/Inventory/GridSlots/Bag_GridSlot.h"
 #include "Widgets/Inventory/SlottedItems/Bag_SlottedItem.h"
 #include "Widgets/Utils/Bag_WidgetUtils.h"
+#include "Widgets/Inventory/HoverItem/Bag_HoverItem.h"
 
 void UBag_InventoryGrid::NativeOnInitialized()
 {
@@ -158,6 +159,7 @@ UBag_SlottedItem* UBag_InventoryGrid::CreateSlottedItem(UBag_InventoryItem* Item
 	SlottedItem->SetIsStackable(bStackable);
 	const int32 StackUpdateAmount = bStackable ? StackAmount : 0;
 	SlottedItem->UpdateStackCount(StackUpdateAmount);
+	SlottedItem->OnSlottedItemClicked.AddDynamic(this, &ThisClass::OnSlottedItemClicked);
 
 	return SlottedItem;
 }
@@ -321,6 +323,88 @@ int32 UBag_InventoryGrid::GetStackAmount(const UBag_GridSlot* GridSlot) const
 	return CurrentSlotStackCount;
 }
 
+bool UBag_InventoryGrid::IsRightClick(const FPointerEvent& MouseEvent) const
+{
+	return MouseEvent.GetEffectingButton() == EKeys::RightMouseButton;
+}
+
+bool UBag_InventoryGrid::IsLeftClick(const FPointerEvent& MouseEvent) const
+{
+	return MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton;
+}
+
+void UBag_InventoryGrid::PickUp(UBag_InventoryItem* ClickedInventoryItem, const int32 GridIndex)
+{
+	//分配悬浮物品
+	AssignHoverItem(ClickedInventoryItem, GridIndex, GridIndex);
+	//移除从网格中的插槽物品
+	RemoveItemFromGrid(ClickedInventoryItem, GridIndex);
+
+}
+
+void UBag_InventoryGrid::AssignHoverItem(UBag_InventoryItem* InventoryItem)
+{
+	if (!IsValid(HoverItem))
+	{
+		HoverItem = CreateWidget<UBag_HoverItem>(GetOwningPlayer(), HoverItemClass);
+	}
+
+	const FBag_GridFragment* GridFragment = GetFragment<FBag_GridFragment>(InventoryItem, FragmentTags::GridFragment);
+	const FBag_ImageFragment* ImageFragment = GetFragment<FBag_ImageFragment>(InventoryItem, FragmentTags::IconFragment);
+	if (!GridFragment || !ImageFragment)
+	{
+		return;
+	}
+
+	const FVector2D DrawSize = GetDrawSize(GridFragment);
+
+	FSlateBrush IconBrush;
+	IconBrush.SetResourceObject(ImageFragment->GetIcon());
+	IconBrush.DrawAs = ESlateBrushDrawType::Image;
+	IconBrush.ImageSize = DrawSize * UWidgetLayoutLibrary::GetViewportScale(this);
+
+	HoverItem->SetImageBrush(IconBrush);
+	HoverItem->SetGridDimensions(GridFragment->GetGridSize());
+	HoverItem->SetInventoryItem(InventoryItem);
+	HoverItem->SetIsStackable(InventoryItem->IsStackable());
+
+	GetOwningPlayer()->SetMouseCursorWidget(EMouseCursor::Default, HoverItem);
+}
+
+void UBag_InventoryGrid::AssignHoverItem(UBag_InventoryItem* InventoryItem, const int32 GridIndex,
+	const int32 PreviousGridIndex)
+{
+	AssignHoverItem(InventoryItem);
+	HoverItem->SetPreviousGridIndex(PreviousGridIndex);
+	HoverItem->UpdateStackCount(InventoryItem->IsStackable() ? GridSlots[GridIndex]->GetStackCount() : 0);
+}
+
+void UBag_InventoryGrid::RemoveItemFromGrid(UBag_InventoryItem* InventoryItem, const int32 GridIndex)
+{
+	const FBag_GridFragment* GridFragment = GetFragment<FBag_GridFragment>(InventoryItem, FragmentTags::GridFragment);
+	if (!GridFragment)
+	{
+		return;
+	}
+
+	UBag_InventoryStatics::ForEach2D(GridSlots, GridIndex, GridFragment->GetGridSize(), Columns,
+		[&](UBag_GridSlot* GridSlot)
+		{
+			GridSlot->SetInventoryItem(nullptr);
+			GridSlot->SetUpperLeftIndex(INDEX_NONE);
+			GridSlot->SetUnOccupiedTexture();
+			GridSlot->SetAvailable(true);
+			GridSlot->SetStackCount(0);
+		});
+
+	if (SlottedItems.Contains(GridIndex))
+	{
+		TObjectPtr<UBag_SlottedItem> FoundSlottedItem;
+		SlottedItems.RemoveAndCopyValue(GridIndex, FoundSlottedItem);
+		FoundSlottedItem->RemoveFromParent();
+	}
+}
+
 void UBag_InventoryGrid::AddStacks(const FBag_SlotAvailabilityResult& Result)
 {
 	if (!MatchesCategory(Result.Item.Get()))
@@ -341,6 +425,17 @@ void UBag_InventoryGrid::AddStacks(const FBag_SlotAvailabilityResult& Result)
 			AddItemAtIndex(Result.Item.Get(), Availability.Index, Result.bStackable, Availability.AmountToFill);
 			UpdateGridSlots(Result.Item.Get(), Availability.Index, Result.bStackable, Availability.AmountToFill);
 		}
+	}
+}
+
+void UBag_InventoryGrid::OnSlottedItemClicked(int32 GridIndex, const FPointerEvent& MouseEvent)
+{
+	check(GridSlots.IsValidIndex(GridIndex));
+	UBag_InventoryItem* ClickedInventoryItem = GridSlots[GridIndex]->GetInventoryItem().Get();
+
+	if (!IsValid(HoverItem) && IsLeftClick(MouseEvent))
+	{
+		PickUp(ClickedInventoryItem, GridIndex);
 	}
 }
 

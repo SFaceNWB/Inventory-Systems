@@ -8,6 +8,7 @@
 
 #include "Bag_InventoryGrid.generated.h"
 
+class UBag_HoverItem;
 struct FGameplayTag;
 struct FBag_ImageFragment;
 struct FBag_GridFragment;
@@ -58,10 +59,19 @@ private:
 	bool IsInGridBounds(const int32 StartIndex, const FIntPoint& ItemDimensions) const;
 	int32 DetermineFillAmoutForSlot(const bool bStackable, const int32 MaxStackSize, const int32 AmountToFill, const UBag_GridSlot* GridSlot) const;
 	int32 GetStackAmount(const UBag_GridSlot* GridSlot) const;
+	bool IsRightClick(const FPointerEvent& MouseEvent) const;
+	bool IsLeftClick(const FPointerEvent& MouseEvent) const;
+	void PickUp(UBag_InventoryItem* ClickedInventoryItem, const int32 GridIndex);
+	void AssignHoverItem(UBag_InventoryItem* InventoryItem);
+	void AssignHoverItem(UBag_InventoryItem* InventoryItem, const int32 GridIndex, const int32 PreviousGridIndex);
+	void RemoveItemFromGrid(UBag_InventoryItem* InventoryItem, const int32 GridIndex);
 
 	UFUNCTION()
 	void AddStacks(const FBag_SlotAvailabilityResult& Result);
 
+	UFUNCTION()
+	void OnSlottedItemClicked(int32 GridIndex, const FPointerEvent& MouseEvent);
+	
 	UPROPERTY(EditAnywhere,BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Inventory")
 	EBag_ItemCategory ItemCategory;
 
@@ -89,6 +99,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	float TileSize;
 
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	TSubclassOf<UBag_HoverItem> HoverItemClass;
+
+	UPROPERTY()
+	TObjectPtr<UBag_HoverItem> HoverItem;
 };
 
 

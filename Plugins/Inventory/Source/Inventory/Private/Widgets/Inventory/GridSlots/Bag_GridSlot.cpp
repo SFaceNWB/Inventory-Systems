@@ -14,7 +14,7 @@ void UBag_GridSlot::SetInventoryItem(UBag_InventoryItem* Item)
 void UBag_GridSlot::SetUnOccupiedTexture()
 {
 	GridSlotState = Ebag_GridSlotState::Unoccupied;
-	Image_GridSlot->SetBrush(Brush_Occupied);
+	Image_GridSlot->SetBrush(Brush_Unoccupied);
 }
 
 void UBag_GridSlot::SetSelectedTexture()
