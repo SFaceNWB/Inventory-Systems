@@ -6,6 +6,24 @@
 
 #include "Components/Image.h"
 
+void UBag_GridSlot::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
+	GridSlotHovered.Broadcast(TileIndex, InMouseEvent);
+}
+
+void UBag_GridSlot::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
+{
+	Super::NativeOnMouseLeave(InMouseEvent);
+	GridSlotUnhovered.Broadcast(TileIndex, InMouseEvent);
+}
+
+FReply UBag_GridSlot::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	GridSlotClicked.Broadcast(TileIndex, InMouseEvent);
+	return FReply::Handled();
+}
+
 void UBag_GridSlot::SetInventoryItem(UBag_InventoryItem* Item)
 {
 	InventoryItem = Item;

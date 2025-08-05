@@ -12,8 +12,9 @@ void UBag_HoverItem::SetImageBrush(const FSlateBrush& Brush) const
 	Image_Icon->SetBrush(Brush);
 }
 
-void UBag_HoverItem::UpdateStackCount(const int32 Count) const
+void UBag_HoverItem::UpdateStackCount(const int32 Count)
 {
+	StackCount = Count;
 	if (Count > 0)
 	{
 		Text_StackCount->SetText(FText::AsNumber(Count));

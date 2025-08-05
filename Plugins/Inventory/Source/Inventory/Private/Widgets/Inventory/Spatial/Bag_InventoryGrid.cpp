@@ -655,6 +655,75 @@ void UBag_InventoryGrid::ChangeHoverType(const int32 Index, const FIntPoint& Dim
 	LastHighlightedDimensions = Dimensions;
 }
 
+void UBag_InventoryGrid::PutDownOnIndex(const int32 Index)
+{
+	AddItemAtIndex(HoverItem->GetInventoryItem(), Index, HoverItem->IsStackable(), HoverItem->GetStackCount());
+	UpdateGridSlots(HoverItem->GetInventoryItem(), Index, HoverItem->IsStackable(), HoverItem->GetStackCount());
+	ClearHoverItem();
+}
+
+void UBag_InventoryGrid::ClearHoverItem()
+{
+	if (!IsValid(HoverItem))
+	{
+		return;
+	}
+	HoverItem->SetInventoryItem(nullptr);
+	HoverItem->SetIsStackable(false);
+	HoverItem->SetPreviousGridIndex(INDEX_NONE);
+	HoverItem->UpdateStackCount(0);
+	HoverItem->SetImageBrush(FSlateNoResource());
+
+	HoverItem->RemoveFromParent();
+	HoverItem = nullptr;
+
+	ShowCursor();
+}
+
+UUserWidget* UBag_InventoryGrid::GetVisibleCursorWidget()
+{
+	if (!IsValid(GetOwningPlayer()))
+	{
+		return nullptr;
+	}
+	if (!IsValid(VisibleCursorWidget))
+	{
+		VisibleCursorWidget = CreateWidget<UUserWidget>(GetOwningPlayer(), VisibleCursorWidgetClass);
+	}
+	return VisibleCursorWidget;
+}
+
+UUserWidget* UBag_InventoryGrid::GetHiddenCursorWidget()
+{
+	if (!IsValid(GetOwningPlayer()))
+	{
+		return nullptr;
+	}
+	if (!IsValid(HiddenCursorWidget))
+	{
+		HiddenCursorWidget = CreateWidget<UUserWidget>(GetOwningPlayer(), VisibleCursorWidgetClass);
+	}
+	return HiddenCursorWidget;
+}
+
+void UBag_InventoryGrid::ShowCursor()
+{
+	if (!IsValid(GetOwningPlayer()))
+	{
+		return;
+	}
+	GetOwningPlayer()->SetMouseCursorWidget(EMouseCursor::Default, GetVisibleCursorWidget());
+}
+
+void UBag_InventoryGrid::HideCursor()
+{
+	if (!IsValid(GetOwningPlayer()))
+	{
+		return;
+	}
+	GetOwningPlayer()->SetMouseCursorWidget(EMouseCursor::Default, GetHiddenCursorWidget());
+}
+
 void UBag_InventoryGrid::AddStacks(const FBag_SlotAvailabilityResult& Result)
 {
 	if (!MatchesCategory(Result.Item.Get()))
@@ -686,6 +755,65 @@ void UBag_InventoryGrid::OnSlottedItemClicked(int32 GridIndex, const FPointerEve
 	if (!IsValid(HoverItem) && IsLeftClick(MouseEvent))
 	{
 		PickUp(ClickedInventoryItem, GridIndex);
+		return;
+	}
+
+	// 悬停的物品和点击的背包物品是同一类型吗，可以堆叠吗？
+		// 是否应该交换堆叠数量？
+		// 是否应该消耗悬停物品的叠加？
+		// 是否应该填充点击物品的堆叠数？(不是消耗物品)
+		// 点击的槽位没有空间吗？
+	// 交换悬停物品和点击的物品
+}
+
+void UBag_InventoryGrid::OnGridSlotClicked(int32 GridIndex, const FPointerEvent& MouseEvent)
+{
+	if (!IsValid(HoverItem))
+	{
+		return;
+	}
+	if (!GridSlots.IsValidIndex(ItemDropIndex))
+	{
+		return;
+	}
+	if (CurrentQueryResult.ValidItem.IsValid() && GridSlots.IsValidIndex(CurrentQueryResult.UpperLeftIndex))
+	{
+		OnSlottedItemClicked(CurrentQueryResult.UpperLeftIndex, MouseEvent);
+		return;
+	}
+
+	auto GridSlot = GridSlots[ItemDropIndex];
+	if (!GridSlot->GetInventoryItem().IsValid())
+	{
+		PutDownOnIndex(ItemDropIndex);
+	}
+}
+
+void UBag_InventoryGrid::OnGridSlotHovered(int32 GridIndex, const FPointerEvent& MouseEvent)
+{
+	if (IsValid(HoverItem))
+	{
+		return;
+	}
+
+	UBag_GridSlot* GridSlot = GridSlots[GridIndex];
+	if (GridSlot->IsAvailable())
+	{
+		GridSlot->SetOccupiedTexture();
+	}
+}
+
+void UBag_InventoryGrid::OnGridSlotUnhovered(int32 GridIndex, const FPointerEvent& MouseEvent)
+{
+	if (IsValid(HoverItem))
+	{
+		return;
+	}
+
+	UBag_GridSlot* GridSlot = GridSlots[GridIndex];
+	if (GridSlot->IsAvailable())
+	{
+		GridSlot->SetUnOccupiedTexture();
 	}
 }
 
@@ -721,6 +849,10 @@ void UBag_InventoryGrid::ConstructGrid()
 			GridCPS->SetPosition(TilePosition * TileSize);
 
 			GridSlots.Add(GridSlot);
+
+			GridSlot->GridSlotClicked.AddDynamic(this, &ThisClass::OnGridSlotClicked);
+			GridSlot->GridSlotHovered.AddDynamic(this, &ThisClass::OnGridSlotHovered);
+			GridSlot->GridSlotUnhovered.AddDynamic(this, &ThisClass::OnGridSlotUnhovered);
 		}
 	}
 }
