@@ -706,6 +706,88 @@ UUserWidget* UBag_InventoryGrid::GetHiddenCursorWidget()
 	return HiddenCursorWidget;
 }
 
+bool UBag_InventoryGrid::IsSameStackable(const UBag_InventoryItem* ClickedInventoryItem) const
+{
+	const bool bIsSameItem = ClickedInventoryItem == HoverItem->GetInventoryItem();
+	const bool bIsStackable = ClickedInventoryItem->IsStackable();
+	return bIsSameItem && bIsStackable && HoverItem->GetItemType().MatchesTagExact(ClickedInventoryItem->GetItemManifest().GetItemType());
+}
+
+void UBag_InventoryGrid::SwapWithHoverItem(UBag_InventoryItem* ClickedInventoryItem, const int32 GridIndex)
+{
+	if (!IsValid(HoverItem))
+	{
+		return;
+	}
+	UBag_InventoryItem* TempInventoryItem = HoverItem->GetInventoryItem();
+	const int32 TempStackCount = HoverItem->GetStackCount();
+	const bool bTempIsStackable = HoverItem->IsStackable();
+	// 保持相同的前一个网格索引
+	AssignHoverItem(ClickedInventoryItem, GridIndex, HoverItem->GetPreviousGridIndex());
+	RemoveItemFromGrid(ClickedInventoryItem, GridIndex);
+	AddItemAtIndex(TempInventoryItem, ItemDropIndex, bTempIsStackable, TempStackCount);
+	UpdateGridSlots(TempInventoryItem, ItemDropIndex, bTempIsStackable, TempStackCount);
+}
+
+bool UBag_InventoryGrid::ShouldSwapStackCount(const int32 RoomInClickedSlot, const int32 HoveredStackCount,
+	const int32 MaxStackSize) const
+{
+	return RoomInClickedSlot == 0 && HoveredStackCount < MaxStackSize;
+}
+
+void UBag_InventoryGrid::SwapStackCounts(const int32 ClickedStackCount, const int32 HoveredStackCount,
+	const int32 Index)
+{
+	UBag_GridSlot* GridSlot = GridSlots[Index];
+	GridSlot->SetStackCount(HoveredStackCount);
+
+	UBag_SlottedItem* ClickedSlottedItem = SlottedItems.FindChecked(Index);
+	ClickedSlottedItem->UpdateStackCount(HoveredStackCount);
+
+	HoverItem->UpdateStackCount(ClickedStackCount);
+}
+
+bool UBag_InventoryGrid::ShouldConsumeHoverItemStacks(const int32 RoomInClickedSlot,
+	const int32 HoveredStackCount) const
+{
+	return RoomInClickedSlot >= HoveredStackCount;
+}
+
+void UBag_InventoryGrid::ConsumeHoverItemStacks(const int32 ClickedStackCount, const int32 HoveredStackCount,
+	const int32 Index)
+{
+	const int32 AmountToTransfer = HoveredStackCount;
+	const int32 NewClickedStackCount = ClickedStackCount + AmountToTransfer;
+
+	UBag_GridSlot* Gridslot = GridSlots[Index];
+	Gridslot->SetStackCount(NewClickedStackCount);
+	SlottedItems.FindChecked(Index)->UpdateStackCount(NewClickedStackCount);
+	ClearHoverItem();
+	ShowCursor();
+
+	const FBag_GridFragment* GridFragment = Gridslot->GetInventoryItem()->GetItemManifest().GetFragmentOfType<FBag_GridFragment>();
+	const FIntPoint Dimensions = GridFragment ? GridFragment->GetGridSize() : FIntPoint(1, 1);
+	HighlightSlots(Index, Dimensions);
+}
+
+bool UBag_InventoryGrid::ShouldFillInStack(const int32 RoomInClickedSlot, const int32 HoveredStackCount) const
+{
+	return RoomInClickedSlot < HoveredStackCount;
+}
+
+void UBag_InventoryGrid::FillInStack(const int32 FillAmount, const int32 Remainder, const int32 Index)
+{
+	UBag_GridSlot* Gridslot = GridSlots[Index];
+	const int32 NewStackCount = Gridslot->GetStackCount() + FillAmount;
+
+	Gridslot->SetStackCount(NewStackCount);
+
+	UBag_SlottedItem* ClickedSlottedItem = SlottedItems.FindChecked(Index);
+	ClickedSlottedItem->UpdateStackCount(NewStackCount);
+
+	HoverItem->UpdateStackCount(Remainder);
+}
+
 void UBag_InventoryGrid::ShowCursor()
 {
 	if (!IsValid(GetOwningPlayer()))
@@ -759,11 +841,41 @@ void UBag_InventoryGrid::OnSlottedItemClicked(int32 GridIndex, const FPointerEve
 	}
 
 	// 悬停的物品和点击的背包物品是同一类型吗，可以堆叠吗？
-		// 是否应该交换堆叠数量？
-		// 是否应该消耗悬停物品的叠加？
+	if (IsSameStackable(ClickedInventoryItem))
+	{
+		const int32 ClickedStackCount = GridSlots[GridIndex]->GetStackCount();
+		const FBag_StackableFragment* StackableFragment = ClickedInventoryItem->GetItemManifest().GetFragmentOfType<FBag_StackableFragment>();
+		const int32 MaxStackSize = StackableFragment->GetMaxStackSize();
+		const int32 RoomInClickedSlot = MaxStackSize - ClickedStackCount;
+		const int32 HoveredStackCount = HoverItem->GetStackCount();
+		// 是否应该交换堆叠数量？(点击物品剩余填充数 == 0 && 悬停物品堆叠量 < 最大堆叠)
+		if (ShouldSwapStackCount(RoomInClickedSlot, HoveredStackCount, MaxStackSize))
+		{
+			SwapStackCounts(ClickedStackCount, HoveredStackCount, GridIndex);
+			return;
+		}
+
+		// 是否应该消耗悬停物品的叠加？(点击物品剩余填充数 >= 悬停物品堆叠量)
+		if (ShouldConsumeHoverItemStacks(ClickedStackCount, RoomInClickedSlot))
+		{
+			ConsumeHoverItemStacks(ClickedStackCount, HoveredStackCount, GridIndex);
+			return;
+		}
+
 		// 是否应该填充点击物品的堆叠数？(不是消耗物品)
-		// 点击的槽位没有空间吗？
+		if (ShouldFillInStack(RoomInClickedSlot, HoveredStackCount))
+		{
+			FillInStack(RoomInClickedSlot, HoveredStackCount - RoomInClickedSlot, GridIndex);
+			return;
+		}
+		// 点击的槽位已经满了不作处理(也可以播放一个音乐)
+		if (RoomInClickedSlot == 0)
+		{
+			return;
+		}
+	}
 	// 交换悬停物品和点击的物品
+	SwapWithHoverItem(ClickedInventoryItem, GridIndex);
 }
 
 void UBag_InventoryGrid::OnGridSlotClicked(int32 GridIndex, const FPointerEvent& MouseEvent)
