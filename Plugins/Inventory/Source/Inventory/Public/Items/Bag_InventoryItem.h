@@ -21,6 +21,7 @@ public:
 	const FBag_ItemManifest& GetItemManifest() const { return ItemManifest.Get<FBag_ItemManifest>(); }
 	FBag_ItemManifest& GetItemManifestMutable() { return ItemManifest.GetMutable<FBag_ItemManifest>(); }
 	bool IsStackable() const;
+	bool IsConsumable() const;
 	int32 GetTotalStackCount() const { return TotalStackCount; }
 	void SetTotalStackCount(int32 Count) { TotalStackCount = Count; }
 

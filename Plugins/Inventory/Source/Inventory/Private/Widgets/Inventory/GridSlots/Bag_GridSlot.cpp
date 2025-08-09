@@ -3,6 +3,7 @@
 
 #include "Widgets/Inventory/GridSlots/Bag_GridSlot.h"
 #include "Items/Bag_InventoryItem.h"
+#include "Widgets/ItemPopUp/Bag_ItemPopUp.h"
 
 #include "Components/Image.h"
 
@@ -29,6 +30,18 @@ void UBag_GridSlot::SetInventoryItem(UBag_InventoryItem* Item)
 	InventoryItem = Item;
 }
 
+UBag_ItemPopUp* UBag_GridSlot::GetItemPopUp() const
+{
+	return ItemPopUp.Get();
+}
+
+void UBag_GridSlot::SetItemPopUp(UBag_ItemPopUp* PopUp)
+{
+	ItemPopUp = PopUp;
+	ItemPopUp->SetGridIndex(GetIndex());
+	ItemPopUp->OnNativeDestruct.AddUObject(this, &ThisClass::OnItemPopUpDestruct);
+}
+
 void UBag_GridSlot::SetUnOccupiedTexture()
 {
 	GridSlotState = Ebag_GridSlotState::Unoccupied;
@@ -51,4 +64,9 @@ void UBag_GridSlot::SetGrayedOutTexture()
 {
 	GridSlotState = Ebag_GridSlotState::GrayedOut;
 	Image_GridSlot->SetBrush(Brush_GrayedOut);
+}
+
+void UBag_GridSlot::OnItemPopUpDestruct(UUserWidget* Menu)
+{
+	ItemPopUp.Reset();
 }

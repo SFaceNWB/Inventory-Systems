@@ -18,6 +18,7 @@
 #include "Widgets/Inventory/SlottedItems/Bag_SlottedItem.h"
 #include "Widgets/Utils/Bag_WidgetUtils.h"
 #include "Widgets/Inventory/HoverItem/Bag_HoverItem.h"
+#include "Widgets/ItemPopUp/Bag_ItemPopUp.h"
 
 void UBag_InventoryGrid::NativeOnInitialized()
 {
@@ -788,6 +789,54 @@ void UBag_InventoryGrid::FillInStack(const int32 FillAmount, const int32 Remaind
 	HoverItem->UpdateStackCount(Remainder);
 }
 
+void UBag_InventoryGrid::CreateItemPopUp(const int32 GridIndex)
+{
+	UBag_InventoryItem* RightClickedItem = GridSlots[GridIndex]->GetInventoryItem().Get();
+	if (!IsValid(RightClickedItem))
+	{
+		return;
+	}
+
+	if (IsValid(GridSlots[GridIndex]->GetItemPopUp()))
+	{
+		return;
+	}
+	ItemPopUp = CreateWidget<UBag_ItemPopUp>(GetOwningPlayer(), ItemPopUpClass);
+	GridSlots[GridIndex]->SetItemPopUp(ItemPopUp);
+
+	OwningCanvasPanel->AddChild(ItemPopUp);
+	UCanvasPanelSlot* CanvasSlot = UWidgetLayoutLibrary::SlotAsCanvasSlot(ItemPopUp);
+	//const FVector2D MousePosition = UWidgetLayoutLibrary::GetMousePositionOnViewport(this);
+	//CanvasSlot->SetPosition(MousePosition);
+	const FVector2D MousePosition = UWidgetLayoutLibrary::GetMousePositionOnViewport(GetOwningPlayer());
+	const FVector2D CanvasPosition = UBag_WidgetUtils::GetWidgetPosition(CanvasPanel); 
+	const FVector2D LocalPosition = MousePosition - CanvasPosition; 
+	CanvasSlot->SetPosition(LocalPosition - ItemPopUpOffset);
+	CanvasSlot->SetSize(ItemPopUp->GetBoxSize());
+
+	const int32 SliderMax = GridSlots[GridIndex]->GetStackCount() - 1;
+	if (RightClickedItem->IsStackable() && SliderMax > 0)
+	{
+		ItemPopUp->OnSplit.BindDynamic(this, &ThisClass::OnPopUpMenuSplit);
+		ItemPopUp->SetSliderParams(SliderMax, FMath::Max(1, GridSlots[GridIndex]->GetStackCount() / 2));
+	}
+	else
+	{
+		ItemPopUp->CollapseSplitButton();
+	}
+	ItemPopUp->OnDrop.BindDynamic(this, &ThisClass::OnPopUpMenuDrop);
+
+	if (RightClickedItem->IsConsumable())
+	{
+		ItemPopUp->OnConsume.BindDynamic(this, &ThisClass::OnPopUpMenuConsume);
+	}
+	else
+	{
+		ItemPopUp->CollapseConsumeButton();
+	}
+}
+
+
 void UBag_InventoryGrid::ShowCursor()
 {
 	if (!IsValid(GetOwningPlayer()))
@@ -804,6 +853,11 @@ void UBag_InventoryGrid::HideCursor()
 		return;
 	}
 	GetOwningPlayer()->SetMouseCursorWidget(EMouseCursor::Default, GetHiddenCursorWidget());
+}
+
+void UBag_InventoryGrid::SetOwningCanvas(UCanvasPanel* OwningCanvas)
+{
+	OwningCanvasPanel = CanvasPanel;
 }
 
 void UBag_InventoryGrid::AddStacks(const FBag_SlotAvailabilityResult& Result)
@@ -840,6 +894,12 @@ void UBag_InventoryGrid::OnSlottedItemClicked(int32 GridIndex, const FPointerEve
 		return;
 	}
 
+	if (IsRightClick(MouseEvent))
+	{
+		CreateItemPopUp(GridIndex);
+		return;
+	}
+
 	// 悬停的物品和点击的背包物品是同一类型吗，可以堆叠吗？
 	if (IsSameStackable(ClickedInventoryItem))
 	{
@@ -856,7 +916,7 @@ void UBag_InventoryGrid::OnSlottedItemClicked(int32 GridIndex, const FPointerEve
 		}
 
 		// 是否应该消耗悬停物品的叠加？(点击物品剩余填充数 >= 悬停物品堆叠量)
-		if (ShouldConsumeHoverItemStacks(ClickedStackCount, RoomInClickedSlot))
+		if (ShouldConsumeHoverItemStacks(RoomInClickedSlot, HoveredStackCount))
 		{
 			ConsumeHoverItemStacks(ClickedStackCount, HoveredStackCount, GridIndex);
 			return;
@@ -927,6 +987,37 @@ void UBag_InventoryGrid::OnGridSlotUnhovered(int32 GridIndex, const FPointerEven
 	{
 		GridSlot->SetUnOccupiedTexture();
 	}
+}
+
+void UBag_InventoryGrid::OnPopUpMenuSplit(int32 SplitAmount, int32 Index)
+{
+	UBag_InventoryItem* RightClickedItem = GridSlots[Index]->GetInventoryItem().Get();
+	if (!IsValid(RightClickedItem))
+	{
+		return;
+	}
+	if (!RightClickedItem->IsStackable())
+	{
+		return;
+	}
+	const int32 UpperLeftIndex = GridSlots[Index]->GetUpperLeftIndex();
+	UBag_GridSlot* UpperLeftGridSlot = GridSlots[UpperLeftIndex];
+	const int32 StackCount = UpperLeftGridSlot->GetStackCount();
+	const int32 NewStackCount = StackCount - SplitAmount;
+
+	UpperLeftGridSlot->SetStackCount(NewStackCount);
+	SlottedItems.FindChecked(UpperLeftIndex)->UpdateStackCount(NewStackCount);
+
+	AssignHoverItem(RightClickedItem, UpperLeftIndex, UpperLeftIndex);
+	HoverItem->UpdateStackCount(SplitAmount);
+}
+
+void UBag_InventoryGrid::OnPopUpMenuDrop(int32 Index)
+{
+}
+
+void UBag_InventoryGrid::OnPopUpMenuConsume(int32 Index)
+{
 }
 
 

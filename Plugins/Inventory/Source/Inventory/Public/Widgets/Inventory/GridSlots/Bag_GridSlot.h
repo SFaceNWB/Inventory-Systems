@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Bag_GridSlot.generated.h"
 
+class UBag_ItemPopUp;
 class UBag_InventoryItem;
 class UImage;
 
@@ -42,6 +43,8 @@ public:
 	void SetUpperLeftIndex(int32 Index) { UpperLeftIndex = Index; }
 	bool IsAvailable() { return bAvailable; }
 	void SetAvailable(bool bIsAvailable) { bAvailable = bIsAvailable; }
+	UBag_ItemPopUp* GetItemPopUp() const;
+	void SetItemPopUp(UBag_ItemPopUp* PopUp);
 
 	void SetUnOccupiedTexture();
 	void SetSelectedTexture();
@@ -52,11 +55,12 @@ public:
 	FGridSlotEvent GridSlotHovered;
 	FGridSlotEvent GridSlotUnhovered;
 private:
-	int32 TileIndex{ INDEX_NONE };
 	int32 StackCount{ 0 };
+	bool bAvailable{ true };
+	int32 TileIndex{ INDEX_NONE };
 	int32 UpperLeftIndex{ INDEX_NONE };
 	TWeakObjectPtr<UBag_InventoryItem> InventoryItem;
-	bool bAvailable{ true };
+	TWeakObjectPtr<UBag_ItemPopUp> ItemPopUp;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Image_GridSlot;
@@ -74,5 +78,8 @@ private:
 	FSlateBrush Brush_GrayedOut;
 
 	Ebag_GridSlotState GridSlotState;
+
+	UFUNCTION()
+	void OnItemPopUpDestruct(UUserWidget* Menu);
 
 };

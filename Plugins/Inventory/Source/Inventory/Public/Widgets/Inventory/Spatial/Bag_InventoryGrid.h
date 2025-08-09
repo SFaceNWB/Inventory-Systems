@@ -8,6 +8,7 @@
 
 #include "Bag_InventoryGrid.generated.h"
 
+class UBag_ItemPopUp;
 enum class Ebag_GridSlotState : uint8;
 class UBag_HoverItem;
 struct FGameplayTag;
@@ -36,12 +37,15 @@ public:
 	UFUNCTION()
 	void AddItem(UBag_InventoryItem* Item);
 
+
 	void ShowCursor();
 	void HideCursor();
+	void SetOwningCanvas(UCanvasPanel* OwningCanvas);
 
 private:
 
 	TWeakObjectPtr<UBag_InventoryComponent> InventoryComponent;
+	TWeakObjectPtr<UCanvasPanel> OwningCanvasPanel;
 
 	void ConstructGrid();
 	FBag_SlotAvailabilityResult HasRoomForItem(const UBag_InventoryItem* Item);
@@ -92,6 +96,13 @@ private:
 	void ConsumeHoverItemStacks(const int32 ClickedStackCount, const int32 HoveredStackCount, const int32 Index);
 	bool ShouldFillInStack(const int32 RoomInClickedSlot, const int32 HoveredStackCount) const;
 	void FillInStack(const int32 FillAmount, const int32 Remainder, const int32 Index);
+	void CreateItemPopUp(const int32 GridIndex);
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	TSubclassOf<UBag_ItemPopUp> ItemPopUpClass;
+
+	UPROPERTY()
+	TObjectPtr<UBag_ItemPopUp> ItemPopUp;
 
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	TSubclassOf<UUserWidget> VisibleCursorWidgetClass;
@@ -121,7 +132,16 @@ private:
 
 	UFUNCTION()
 	void OnGridSlotUnhovered(int32 GridIndex, const FPointerEvent& MouseEvent);
-	
+
+	UFUNCTION()
+	void OnPopUpMenuSplit(int32 SplitAmount, int32 Index);
+
+	UFUNCTION()
+	void OnPopUpMenuDrop(int32 Index);
+
+	UFUNCTION()
+	void OnPopUpMenuConsume(int32 Index);
+
 	UPROPERTY(EditAnywhere,BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Inventory")
 	EBag_ItemCategory ItemCategory;
 
@@ -154,6 +174,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UBag_HoverItem> HoverItem;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	FVector2D ItemPopUpOffset;
 
 	FBag_TileParameters TileParameters;
 	FBag_TileParameters LastTileParameters;

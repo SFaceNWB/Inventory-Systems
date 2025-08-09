@@ -6,6 +6,7 @@
 #include "Widgets/Inventory/InventoryBase/Bag_InventoryBase.h"
 #include "Bag_SpatialInventory.generated.h"
 
+class UCanvasPanel;
 class UButton;
 class UWidgetSwitcher;
 class UBag_InventoryGrid;
@@ -23,6 +24,9 @@ public:
 
 	virtual FBag_SlotAvailabilityResult HasRoomForItem(UBag_ItemComponent* ItemComponent) const override;
 private:
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UCanvasPanel> CanvasPanel;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidgetSwitcher> Switcher;

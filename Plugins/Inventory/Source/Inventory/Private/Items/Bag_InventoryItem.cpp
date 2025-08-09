@@ -24,3 +24,8 @@ bool UBag_InventoryItem::IsStackable() const
 	const FBag_StackableFragment* Stackable = GetItemManifest().GetFragmentOfType<FBag_StackableFragment>();
 	return Stackable != nullptr;
 }
+
+bool UBag_InventoryItem::IsConsumable() const
+{
+	return GetItemManifest().GetItemCategory() == EBag_ItemCategory::Consumable;
+}
