@@ -23,6 +23,12 @@ void UBag_SpatialInventory::NativeOnInitialized()
 	ShowEquipped();
 }
 
+FReply UBag_SpatialInventory::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	ActiveGrid->DropItem();
+	return FReply::Handled();
+}
+
 FBag_SlotAvailabilityResult UBag_SpatialInventory::HasRoomForItem(UBag_ItemComponent* ItemComponent) const
 {
 	switch (UBag_InventoryStatics::GetItemCategoryFromItemComponent(ItemComponent))

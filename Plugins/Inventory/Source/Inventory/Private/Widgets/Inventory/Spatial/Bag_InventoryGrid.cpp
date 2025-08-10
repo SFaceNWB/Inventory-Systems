@@ -806,12 +806,13 @@ void UBag_InventoryGrid::CreateItemPopUp(const int32 GridIndex)
 
 	OwningCanvasPanel->AddChild(ItemPopUp);
 	UCanvasPanelSlot* CanvasSlot = UWidgetLayoutLibrary::SlotAsCanvasSlot(ItemPopUp);
-	//const FVector2D MousePosition = UWidgetLayoutLibrary::GetMousePositionOnViewport(this);
-	//CanvasSlot->SetPosition(MousePosition);
-	const FVector2D MousePosition = UWidgetLayoutLibrary::GetMousePositionOnViewport(GetOwningPlayer());
-	const FVector2D CanvasPosition = UBag_WidgetUtils::GetWidgetPosition(CanvasPanel); 
-	const FVector2D LocalPosition = MousePosition - CanvasPosition; 
-	CanvasSlot->SetPosition(LocalPosition - ItemPopUpOffset);
+
+	const FVector2D MousePosition = UWidgetLayoutLibrary::GetMousePositionOnViewport(this);
+	CanvasSlot->SetPosition(MousePosition - ItemPopUpOffset);
+	//const FVector2D MousePosition = UWidgetLayoutLibrary::GetMousePositionOnViewport(GetOwningPlayer());
+	//const FVector2D CanvasPosition = UBag_WidgetUtils::GetWidgetPosition(CanvasPanel); 
+	//const FVector2D LocalPosition = MousePosition - CanvasPosition; 
+	//CanvasSlot->SetPosition(LocalPosition - ItemPopUpOffset);
 	CanvasSlot->SetSize(ItemPopUp->GetBoxSize());
 
 	const int32 SliderMax = GridSlots[GridIndex]->GetStackCount() - 1;
@@ -836,6 +837,23 @@ void UBag_InventoryGrid::CreateItemPopUp(const int32 GridIndex)
 	}
 }
 
+void UBag_InventoryGrid::DropItem()
+{
+	if (!IsValid(HoverItem))
+	{
+		return;
+	}
+	if (!IsValid(HoverItem->GetInventoryItem()))
+	{
+		return;
+	}
+
+	InventoryComponent->Server_DropItem(HoverItem->GetInventoryItem(), HoverItem->GetStackCount());
+
+	ClearHoverItem();
+	ShowCursor();
+}
+
 
 void UBag_InventoryGrid::ShowCursor()
 {
@@ -857,7 +875,7 @@ void UBag_InventoryGrid::HideCursor()
 
 void UBag_InventoryGrid::SetOwningCanvas(UCanvasPanel* OwningCanvas)
 {
-	OwningCanvasPanel = CanvasPanel;
+	OwningCanvasPanel = OwningCanvas;
 }
 
 void UBag_InventoryGrid::AddStacks(const FBag_SlotAvailabilityResult& Result)
@@ -1014,6 +1032,14 @@ void UBag_InventoryGrid::OnPopUpMenuSplit(int32 SplitAmount, int32 Index)
 
 void UBag_InventoryGrid::OnPopUpMenuDrop(int32 Index)
 {
+	UBag_InventoryItem* RightClickedItem = GridSlots[Index]->GetInventoryItem().Get();
+	if (!IsValid(RightClickedItem))
+	{
+		return;
+	}
+
+	PickUp(RightClickedItem, Index);
+	DropItem();
 }
 
 void UBag_InventoryGrid::OnPopUpMenuConsume(int32 Index)
@@ -1042,7 +1068,7 @@ void UBag_InventoryGrid::ConstructGrid()
 		for (int32 i = 0; i < Columns; ++i)
 		{
 			UBag_GridSlot* GridSlot = CreateWidget<UBag_GridSlot>(this, GridSlotClass);
-			CanvasPanel->AddChildToCanvas(GridSlot);
+			CanvasPanel->AddChild(GridSlot);
 
 			const FIntPoint TilePosition(i, j);
 			GridSlot->SetTileIndex(UBag_WidgetUtils::GetIndexFromPosition(TilePosition, Columns));

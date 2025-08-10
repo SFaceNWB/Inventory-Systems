@@ -10,6 +10,7 @@ UBag_ItemComponent::UBag_ItemComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 
 	PickupMessage = FString("E - Pickup Item");
+	SetIsReplicatedByDefault(true);
 }
 
 void UBag_ItemComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -17,6 +18,11 @@ void UBag_ItemComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProper
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ThisClass, ItemManifest);
+}
+
+void UBag_ItemComponent::InitItemManifest(FBag_ItemManifest CopyOfManifest)
+{
+	ItemManifest = CopyOfManifest;
 }
 
 void UBag_ItemComponent::PickedUp()

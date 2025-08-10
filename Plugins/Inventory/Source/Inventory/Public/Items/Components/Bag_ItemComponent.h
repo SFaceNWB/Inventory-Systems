@@ -17,6 +17,8 @@ public:
 	UBag_ItemComponent();
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+	void InitItemManifest(FBag_ItemManifest CopyOfManifest);
+
 	FBag_ItemManifest GetItemManifest()const { return ItemManifest; }
 	FString GetPickupMessage() const { return PickupMessage; }
 	void PickedUp();

@@ -25,6 +25,7 @@ void UBag_InventoryComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeP
 	DOREPLIFETIME(ThisClass, InventoryList);
 }
 
+
 void UBag_InventoryComponent::TryAddItem(UBag_ItemComponent* ItemComponent)
 {
 	FBag_SlotAvailabilityResult Result = InventoryMenu->HasRoomForItem(ItemComponent);
@@ -86,6 +87,20 @@ void UBag_InventoryComponent::Server_AddStacksToItem_Implementation(UBag_ItemCom
 	}
 }
 
+void UBag_InventoryComponent::Server_DropItem_Implementation(UBag_InventoryItem* Item, int32 StackCount)
+{
+	const int32 NewStackCount = Item->GetTotalStackCount() - StackCount;
+	if (NewStackCount <= 0)
+	{
+		InventoryList.RemoveEntry(Item);
+	}
+	else
+	{
+		Item->SetTotalStackCount(NewStackCount);
+	}
+	SpawnDroppedItem(Item, StackCount);
+}
+
 void UBag_InventoryComponent::ToggleInventoryMenu()
 {
 	if (bInventoryMenuOpen)
@@ -104,6 +119,23 @@ void UBag_InventoryComponent::AddRepSubObj(UObject* SubObj)
 	{
 		AddReplicatedSubObject(SubObj);
 	}
+}
+
+void UBag_InventoryComponent::SpawnDroppedItem(UBag_InventoryItem* Item, int32 StackCount)
+{
+	const APawn* OwningPawn = OwningController->GetPawn();
+	FVector RotatedForward = OwningPawn->GetActorForwardVector();
+	RotatedForward = RotatedForward.RotateAngleAxis(FMath::FRandRange(DropSpawnAngleMin, DropSpawnAngleMax), FVector::UpVector);
+	FVector SpawnLocation = OwningPawn->GetActorLocation() + RotatedForward * FMath::FRandRange(DropSpawnDistanceMin, DropSpawnDistanceMax);
+	SpawnLocation.Z -= RelativeSpawnElevation;
+	const FRotator SpawnrRotation = FRotator::ZeroRotator;
+
+	FBag_ItemManifest& ItemManifest = Item->GetItemManifestMutable();
+	if (FBag_StackableFragment* StackableFragment = ItemManifest.GetFragmentOfTypeMutable<FBag_StackableFragment>())
+	{
+		StackableFragment->SetStackCount(StackCount);
+	}
+	ItemManifest.SpawnPickUpActor(this, SpawnLocation, SpawnrRotation);
 }
 
 void UBag_InventoryComponent::BeginPlay()

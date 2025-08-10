@@ -21,6 +21,7 @@ class INVENTORY_API UBag_SpatialInventory : public UBag_InventoryBase
 public:
 
 	virtual void NativeOnInitialized() override;
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
 	virtual FBag_SlotAvailabilityResult HasRoomForItem(UBag_ItemComponent* ItemComponent) const override;
 private:
