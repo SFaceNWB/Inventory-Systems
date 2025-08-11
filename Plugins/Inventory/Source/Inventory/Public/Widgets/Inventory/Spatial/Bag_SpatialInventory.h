@@ -6,6 +6,7 @@
 #include "Widgets/Inventory/InventoryBase/Bag_InventoryBase.h"
 #include "Bag_SpatialInventory.generated.h"
 
+class UBag_ItemDescription;
 class UCanvasPanel;
 class UButton;
 class UWidgetSwitcher;
@@ -22,8 +23,12 @@ public:
 
 	virtual void NativeOnInitialized() override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 	virtual FBag_SlotAvailabilityResult HasRoomForItem(UBag_ItemComponent* ItemComponent) const override;
+	virtual void OnItemHovered(UBag_InventoryItem* Item) override;
+	virtual void OnItemUnhovered() override;
+	virtual bool HasHoverItem() const override;
 private:
 
 	UPROPERTY(meta = (BindWidget))
@@ -50,6 +55,19 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UButton> Button_Craftables;
 
+	FTimerHandle DescriptionTimer;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	float DescriptionTimerDelay = 0.5f;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	TSubclassOf<UBag_ItemDescription> ItemDescriptionClass;
+
+	UPROPERTY()
+	TObjectPtr<UBag_ItemDescription> ItemDescription;
+
+	UBag_ItemDescription* GetItemDescription();
+
 	UFUNCTION()
 	void ShowEquipped();
 
@@ -61,5 +79,7 @@ private:
 
 	void DisableButton(UButton* Button);
 	void SetActiveGrid(UBag_InventoryGrid* Grid, UButton* Button);
+	void SetItemDescriptionSizeAndPosition(UBag_ItemDescription* Description, UCanvasPanel* Canvas) const;
+
 	TWeakObjectPtr<UBag_InventoryGrid> ActiveGrid;
 };

@@ -29,6 +29,33 @@ bool UBag_WidgetUtils::IsWithBounds(const FVector2D& BoundaryPosition, const FVe
 		MousePosition.Y >= BoundaryPosition.Y && MousePosition.Y <= BoundaryPosition.Y + WidgetSize.Y;
 }
 
+FVector2D UBag_WidgetUtils::GetClampedWidgetPosition(const FVector2D& Boundary, const FVector2D& WidgetSize,
+	const FVector2D& MousePos)
+{
+	FVector2D ClampedPosition = MousePos;
+
+	// 调整水平位置确保小部件在边界内
+	if (MousePos.X + WidgetSize.X > Boundary.X)//如果超出右边界
+	{
+		ClampedPosition.X = Boundary.X - WidgetSize.X;
+	}
+	if (MousePos.X < 0.0f)
+	{
+		ClampedPosition.X = 0.0f;
+	}
+
+	// 调整垂直位置确保小部件在边界内
+	if (MousePos.Y + WidgetSize.Y > Boundary.Y)//如果超出下边界
+	{
+		ClampedPosition.Y = Boundary.Y - WidgetSize.Y;
+	}
+	if (MousePos.Y < 0.0f)
+	{
+		ClampedPosition.Y = 0.0f;
+	}
+	return ClampedPosition;
+}
+
 int32 UBag_WidgetUtils::GetIndexFromPosition(const FIntPoint& Position, const int32 Columns)
 {
 	return  Position.X + Position.Y * Columns;

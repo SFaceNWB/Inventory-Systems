@@ -5,12 +5,23 @@
 
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "InventoryManagement/Utils/Bag_InventoryStatics.h"
 #include "Items/Bag_InventoryItem.h"
 
 FReply UBag_SlottedItem::NativeOnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
 	OnSlottedItemClicked.Broadcast(GridIndex, MouseEvent);
 	return FReply::Handled();
+}
+
+void UBag_SlottedItem::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	UBag_InventoryStatics::ItemHovered(GetOwningPlayer(), InventoryItem.Get());
+}
+
+void UBag_SlottedItem::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
+{
+	UBag_InventoryStatics::ItemUnhovered(GetOwningPlayer());
 }
 
 void UBag_SlottedItem::SetInventoryItem(UBag_InventoryItem* Item)

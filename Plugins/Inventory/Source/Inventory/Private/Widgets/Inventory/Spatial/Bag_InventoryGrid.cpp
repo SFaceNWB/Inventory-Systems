@@ -809,10 +809,6 @@ void UBag_InventoryGrid::CreateItemPopUp(const int32 GridIndex)
 
 	const FVector2D MousePosition = UWidgetLayoutLibrary::GetMousePositionOnViewport(this);
 	CanvasSlot->SetPosition(MousePosition - ItemPopUpOffset);
-	//const FVector2D MousePosition = UWidgetLayoutLibrary::GetMousePositionOnViewport(GetOwningPlayer());
-	//const FVector2D CanvasPosition = UBag_WidgetUtils::GetWidgetPosition(CanvasPanel); 
-	//const FVector2D LocalPosition = MousePosition - CanvasPosition; 
-	//CanvasSlot->SetPosition(LocalPosition - ItemPopUpOffset);
 	CanvasSlot->SetSize(ItemPopUp->GetBoxSize());
 
 	const int32 SliderMax = GridSlots[GridIndex]->GetStackCount() - 1;
@@ -854,6 +850,10 @@ void UBag_InventoryGrid::DropItem()
 	ShowCursor();
 }
 
+bool UBag_InventoryGrid::HasHoverItem() const
+{
+	return IsValid(HoverItem);
+}
 
 void UBag_InventoryGrid::ShowCursor()
 {
@@ -903,6 +903,8 @@ void UBag_InventoryGrid::AddStacks(const FBag_SlotAvailabilityResult& Result)
 
 void UBag_InventoryGrid::OnSlottedItemClicked(int32 GridIndex, const FPointerEvent& MouseEvent)
 {
+	UBag_InventoryStatics::ItemUnhovered(GetOwningPlayer());
+
 	check(GridSlots.IsValidIndex(GridIndex));
 	UBag_InventoryItem* ClickedInventoryItem = GridSlots[GridIndex]->GetInventoryItem().Get();
 

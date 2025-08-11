@@ -5,6 +5,7 @@
 
 #include "InventoryManagement/Components/Bag_InventoryComponent.h"
 #include "Items/Components/Bag_ItemComponent.h"
+#include "Widgets/Inventory/InventoryBase/Bag_InventoryBase.h"
 
 UBag_InventoryComponent* UBag_InventoryStatics::GetInventoryComponent(const APlayerController* PlayerController)
 {
@@ -23,4 +24,42 @@ EBag_ItemCategory UBag_InventoryStatics::GetItemCategoryFromItemComponent(UBag_I
 		return EBag_ItemCategory::None;
 	}
 	return ItemComponent->GetItemManifest().GetItemCategory();
+}
+
+void UBag_InventoryStatics::ItemHovered(APlayerController* PC, UBag_InventoryItem* Item)
+{
+	UBag_InventoryComponent* IC = GetInventoryComponent(PC);
+	if (!IsValid(IC))
+	{
+		return;
+	}
+	UBag_InventoryBase* InventoryBase = IC->GetInventoryMenu();
+	if (!IsValid(InventoryBase))
+	{
+		return;
+	}
+	if (InventoryBase->HasHoverItem())
+	{
+		return;
+	}
+	InventoryBase->OnItemHovered(Item);
+}
+
+void UBag_InventoryStatics::ItemUnhovered(APlayerController* PC)
+{
+	UBag_InventoryComponent* IC = GetInventoryComponent(PC);
+	if (!IsValid(IC))
+	{
+		return;
+	}
+	UBag_InventoryBase* InventoryBase = IC->GetInventoryMenu();
+	if (!IsValid(InventoryBase))
+	{
+		return;
+	}
+	if (InventoryBase->HasHoverItem())
+	{
+		return;
+	}
+	InventoryBase->OnItemUnhovered();
 }

@@ -7,6 +7,10 @@
 #include "Components/WidgetSwitcher.h"
 #include "InventoryManagement/Utils/Bag_InventoryStatics.h"
 #include "Inventory.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Components/CanvasPanel.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Widgets/ItemDescription/Bag_ItemDescription.h"
 
 void UBag_SpatialInventory::NativeOnInitialized()
 {
@@ -29,6 +33,18 @@ FReply UBag_SpatialInventory::NativeOnMouseButtonDown(const FGeometry& InGeometr
 	return FReply::Handled();
 }
 
+void UBag_SpatialInventory::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	if (!IsValid(ItemDescription))
+	{
+		return;
+	}
+	SetItemDescriptionSizeAndPosition(ItemDescription, CanvasPanel);
+
+}
+
 FBag_SlotAvailabilityResult UBag_SpatialInventory::HasRoomForItem(UBag_ItemComponent* ItemComponent) const
 {
 	switch (UBag_InventoryStatics::GetItemCategoryFromItemComponent(ItemComponent))
@@ -43,6 +59,55 @@ FBag_SlotAvailabilityResult UBag_SpatialInventory::HasRoomForItem(UBag_ItemCompo
 		UE_LOG(LogInventory, Error, TEXT("ItemComponent doesn't have a valid Item Category."));
 		return FBag_SlotAvailabilityResult();
 	}
+}
+
+void UBag_SpatialInventory::OnItemHovered(UBag_InventoryItem* Item)
+{
+	UBag_ItemDescription* DescriptionWidget = GetItemDescription();
+	DescriptionWidget->SetVisibility(ESlateVisibility::Collapsed);
+
+	GetOwningPlayer()->GetWorldTimerManager().ClearTimer(DescriptionTimer);
+
+	FTimerDelegate DescriptionTimerDelegate;
+	DescriptionTimerDelegate.BindLambda(
+		[this]()
+		{
+			GetItemDescription()->SetVisibility(ESlateVisibility::HitTestInvisible);
+		});
+	GetOwningPlayer()->GetWorldTimerManager().SetTimer(DescriptionTimer, DescriptionTimerDelegate, DescriptionTimerDelay, false);
+}
+
+void UBag_SpatialInventory::OnItemUnhovered()
+{
+	GetItemDescription()->SetVisibility(ESlateVisibility::Collapsed);
+	GetOwningPlayer()->GetWorldTimerManager().ClearTimer(DescriptionTimer);
+}
+
+bool UBag_SpatialInventory::HasHoverItem() const
+{
+	if (Grid_Equipped->HasHoverItem())
+	{
+		return true;
+	}
+	if (Grid_Consumables->HasHoverItem())
+	{
+		return true;
+	}
+	if (Grid_Craftables->HasHoverItem())
+	{
+		return true;
+	}
+	return false;
+}
+
+UBag_ItemDescription* UBag_SpatialInventory::GetItemDescription()
+{
+	if (!IsValid(ItemDescription))
+	{
+		ItemDescription = CreateWidget<UBag_ItemDescription>(GetOwningPlayer(), ItemDescriptionClass);
+		CanvasPanel->AddChild(ItemDescription);
+	}
+	return ItemDescription;
 }
 
 void UBag_SpatialInventory::ShowEquipped()
@@ -81,4 +146,22 @@ void UBag_SpatialInventory::SetActiveGrid(UBag_InventoryGrid* Grid, UButton* But
 	}
 	DisableButton(Button);
 	Switcher->SetActiveWidget(Grid);
+}
+
+void UBag_SpatialInventory::SetItemDescriptionSizeAndPosition(UBag_ItemDescription* Description,
+	UCanvasPanel* Canvas) const
+{
+	UCanvasPanelSlot* ItemDescripttionCPS = UWidgetLayoutLibrary::SlotAsCanvasSlot(Description);
+	if (!IsValid(ItemDescripttionCPS))
+	{
+		return;
+	}
+	const FVector2D ItemDescriptionSize = Description->GetDesiredSize();
+	ItemDescripttionCPS->SetSize(ItemDescriptionSize);
+
+	FVector2D ClampedPosition = UBag_WidgetUtils::GetClampedWidgetPosition(
+		UBag_WidgetUtils::GetWidgetSize(Canvas),
+		ItemDescriptionSize,
+		UWidgetLayoutLibrary::GetMousePositionOnViewport(GetOwningPlayer()));
+	ItemDescripttionCPS->SetPosition(ClampedPosition);
 }

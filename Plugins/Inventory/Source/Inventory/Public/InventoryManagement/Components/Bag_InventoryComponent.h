@@ -41,6 +41,7 @@ public:
 	void ToggleInventoryMenu();
 	void AddRepSubObj(UObject* SubObj);
 	void SpawnDroppedItem(UBag_InventoryItem* Item, int32 StackCount);
+	UBag_InventoryBase* GetInventoryMenu() const{ return InventoryMenu; }
 
 	FInventoryItemChange OnItemAdded;
 	FInventoryItemChange OnItemRemoved;

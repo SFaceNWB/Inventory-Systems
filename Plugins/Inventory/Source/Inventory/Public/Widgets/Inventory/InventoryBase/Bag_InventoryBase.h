@@ -8,6 +8,7 @@
 #include "Bag_InventoryBase.generated.h"
 
 class UBag_ItemComponent;
+class UBag_InventoryItem;
 /**
  * 
  */
@@ -17,4 +18,7 @@ class INVENTORY_API UBag_InventoryBase : public UUserWidget
 	GENERATED_BODY()
 public:
 	virtual FBag_SlotAvailabilityResult HasRoomForItem(UBag_ItemComponent* ItemComponent) const {return FBag_SlotAvailabilityResult();}
+	virtual void OnItemHovered(UBag_InventoryItem* Item){ }
+	virtual void OnItemUnhovered() { }
+	virtual bool HasHoverItem() const { return false; }
 };
