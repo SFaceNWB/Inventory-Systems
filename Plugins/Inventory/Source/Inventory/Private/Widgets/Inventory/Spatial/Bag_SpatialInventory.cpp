@@ -10,6 +10,7 @@
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
+#include "Items/Bag_InventoryItem.h"
 #include "Widgets/ItemDescription/Bag_ItemDescription.h"
 
 void UBag_SpatialInventory::NativeOnInitialized()
@@ -63,6 +64,7 @@ FBag_SlotAvailabilityResult UBag_SpatialInventory::HasRoomForItem(UBag_ItemCompo
 
 void UBag_SpatialInventory::OnItemHovered(UBag_InventoryItem* Item)
 {
+	const auto& Manifest = Item->GetItemManifest();
 	UBag_ItemDescription* DescriptionWidget = GetItemDescription();
 	DescriptionWidget->SetVisibility(ESlateVisibility::Collapsed);
 
@@ -70,8 +72,9 @@ void UBag_SpatialInventory::OnItemHovered(UBag_InventoryItem* Item)
 
 	FTimerDelegate DescriptionTimerDelegate;
 	DescriptionTimerDelegate.BindLambda(
-		[this]()
+		[this, &Manifest, DescriptionWidget]()
 		{
+			Manifest.AssimilateInventoryFragments(DescriptionWidget);
 			GetItemDescription()->SetVisibility(ESlateVisibility::HitTestInvisible);
 		});
 	GetOwningPlayer()->GetWorldTimerManager().SetTimer(DescriptionTimer, DescriptionTimerDelegate, DescriptionTimerDelay, false);

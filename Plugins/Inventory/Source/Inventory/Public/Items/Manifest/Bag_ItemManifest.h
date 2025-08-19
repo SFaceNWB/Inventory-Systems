@@ -11,6 +11,7 @@
 struct FBag_ItemFragment;
 enum class EBag_ItemCategory : uint8;
 class UBag_InventoryItem;
+class UBag_CompositeBase;
 /**
  * 创建新背包物品必须的数据的物品清单类。
  */
@@ -22,6 +23,7 @@ struct INVENTORY_API FBag_ItemManifest
 	UBag_InventoryItem* Manifest(UObject* NewOuter);
 	EBag_ItemCategory GetItemCategory() const { return ItemCategory; }
 	FGameplayTag GetItemType() const { return ItemType; }
+	void AssimilateInventoryFragments(UBag_CompositeBase* Composite) const;
 
 	template<typename T> requires std::derived_from<T, FBag_ItemFragment>
 	const T* GetFragmentOfTypeWithTag(const FGameplayTag& FragmentTag) const;
@@ -31,6 +33,9 @@ struct INVENTORY_API FBag_ItemManifest
 
 	template<typename T> requires std::derived_from<T, FBag_ItemFragment>
 	T* GetFragmentOfTypeMutable();
+
+	template<typename T> requires std::derived_from<T, FBag_ItemFragment>
+	TArray<const T*> GetAllFragmentsOfType() const;
 
 	void SpawnPickUpActor(const UObject* WorldContextObject, const FVector& SpawnLocation, const FRotator& SpawnRotation);
 
@@ -91,6 +96,20 @@ T* FBag_ItemManifest::GetFragmentOfTypeMutable()
 		}
 	}
 	return nullptr;
+}
+
+template <typename T> requires std::derived_from<T, FBag_ItemFragment>
+TArray<const T*> FBag_ItemManifest::GetAllFragmentsOfType() const
+{
+	TArray<const T*> Result;
+	for (const TInstancedStruct<FBag_ItemFragment>& Fragment : Fragments)
+	{
+		if (const T* FragmentPtr = Fragment.GetPtr<T>())
+		{
+			Result.Add(FragmentPtr);
+		}
+	}
+	return Result;
 }
 
 

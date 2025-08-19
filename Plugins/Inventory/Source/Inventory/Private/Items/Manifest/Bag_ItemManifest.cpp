@@ -4,6 +4,8 @@
 #include "Items/Manifest/Bag_ItemManifest.h"
 
 #include "Items/Bag_InventoryItem.h"
+#include "Items/Fragments/Bag_ItemFragment.h"
+#include "Widgets/Composite/Bag_CompositeBase.h"
 #include "Items/Components/Bag_ItemComponent.h"
 
 UBag_InventoryItem* FBag_ItemManifest::Manifest(UObject* NewOuter)
@@ -12,6 +14,19 @@ UBag_InventoryItem* FBag_ItemManifest::Manifest(UObject* NewOuter)
 	Item->SetItemManifest(*this);
 
 	return Item;
+}
+
+void FBag_ItemManifest::AssimilateInventoryFragments(UBag_CompositeBase* Composite) const
+{
+	const auto& InventoryItemFragments = GetAllFragmentsOfType<FBag_InventoryItemFragment>();
+	for (const auto* Fragment : InventoryItemFragments)
+	{
+		Composite->ApplyFunction(
+			[Fragment](UBag_CompositeBase* Widget)
+			{
+				Fragment->Assimilate(Widget);
+			});
+	}
 }
 
 void FBag_ItemManifest::SpawnPickUpActor(const UObject* WorldContextObject, const FVector& SpawnLocation,
