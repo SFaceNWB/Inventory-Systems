@@ -13,6 +13,12 @@ UBag_InventoryItem* FBag_ItemManifest::Manifest(UObject* NewOuter)
 	UBag_InventoryItem* Item = NewObject<UBag_InventoryItem>(NewOuter, UBag_InventoryItem::StaticClass());
 	Item->SetItemManifest(*this);
 
+	for (auto& Fragment : Item->GetItemManifestMutable().GetFragmentsMutable())
+	{
+		Fragment.GetMutable().Manifest();
+	}
+	ClearFragments();
+
 	return Item;
 }
 
@@ -48,4 +54,13 @@ void FBag_ItemManifest::SpawnPickUpActor(const UObject* WorldContextObject, cons
 	check(ItemComponent);
 
 	ItemComponent->InitItemManifest(*this);
+}
+
+void FBag_ItemManifest::ClearFragments()
+{
+	for (auto& Fragment : Fragments)
+	{
+		Fragment.Reset();
+	}
+	Fragments.Empty();
 }

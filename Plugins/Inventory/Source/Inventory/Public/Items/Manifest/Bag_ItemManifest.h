@@ -20,6 +20,7 @@ struct INVENTORY_API FBag_ItemManifest
 {
 	GENERATED_BODY()
 
+	TArray<TInstancedStruct<FBag_ItemFragment>>& GetFragmentsMutable() { return Fragments; }
 	UBag_InventoryItem* Manifest(UObject* NewOuter);
 	EBag_ItemCategory GetItemCategory() const { return ItemCategory; }
 	FGameplayTag GetItemType() const { return ItemType; }
@@ -52,6 +53,8 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	TSubclassOf<AActor> PickUpActorClass;
+
+	void ClearFragments();
 };
 
 

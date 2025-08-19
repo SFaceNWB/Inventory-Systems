@@ -21,6 +21,7 @@ struct FBag_ItemFragment
 
 	FGameplayTag GetFragmentTag() const { return FragmentTag; }
 	void SetFragmentTag(FGameplayTag Tag) { FragmentTag = Tag; }
+	virtual void Manifest() {}
 private:
 
 	UPROPERTY(EditAnywhere, Category = "Inventory")
@@ -88,6 +89,45 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	FText FragmentText;
+};
+
+USTRUCT(BlueprintType)
+struct FBag_LabeledNumberFragment : public FBag_InventoryItemFragment
+{
+	GENERATED_BODY()
+
+	virtual void Assimilate(UBag_CompositeBase* Composite) const override;
+	virtual void Manifest() override;
+
+
+	//当第一次显示时，这个片段将随机化。但装备和丢下时，应该保持相同的值，所以不应该发生随机化。
+	bool bRandomizeOnManifest{ true };
+
+private:
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	FText Text_Label{};
+
+	UPROPERTY(VisibleAnywhere, Category = "Inventory")
+	float Value{ 0.f };
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	float Min{ 0 };
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	float Max{ 0 };
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	bool bCollapseLabel{ false };
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	bool bCollapseValue{ false };
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	int32 MinFractionalDigits{ 1 };
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	int32 MaxFractionalDigits{ 1 };
 };
 
 USTRUCT(BlueprintType)

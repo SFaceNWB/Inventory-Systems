@@ -4,6 +4,7 @@
 #include "Items/Fragments/Bag_ItemFragment.h"
 #include "Widgets/Composite/Bag_CompositeBase.h"
 #include "Widgets/Composite/Bag_Leaf_Image.h"
+#include "Widgets/Composite/Bag_Leaf_labeledValue.h"
 #include "Widgets/Composite/Bag_Leaf_Text.h"
 
 void FBag_InventoryItemFragment::Assimilate(UBag_CompositeBase* Composite) const
@@ -39,4 +40,33 @@ void FBag_TextFragment::Assimilate(UBag_CompositeBase* Composite) const
 	if (!IsValid(LeafText)) return;
 
 	LeafText->SetText(FragmentText);
+}
+
+void FBag_LabeledNumberFragment::Assimilate(UBag_CompositeBase* Composite) const
+{
+	FBag_InventoryItemFragment::Assimilate(Composite);
+
+	if (!MatchesWidgetTag(Composite)) return;
+
+	UBag_Leaf_labeledValue* LabeledValue = Cast<UBag_Leaf_labeledValue>(Composite);
+	if (!IsValid(LabeledValue)) return;
+
+	LabeledValue->SetText_Label(Text_Label, bCollapseLabel);
+
+	FNumberFormattingOptions Options;
+	Options.MinimumFractionalDigits = MinFractionalDigits;
+	Options.MaximumFractionalDigits = MaxFractionalDigits;
+
+	LabeledValue->SetText_Value(FText::AsNumber(Value, &Options), bCollapseValue);
+}
+
+void FBag_LabeledNumberFragment::Manifest()
+{
+	FBag_InventoryItemFragment::Manifest();
+
+	if (bRandomizeOnManifest)
+	{
+		Value = FMath::FRandRange(Min, Max);
+	}
+	bRandomizeOnManifest = false;
 }
