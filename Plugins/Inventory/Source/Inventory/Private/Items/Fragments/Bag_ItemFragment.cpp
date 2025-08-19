@@ -4,6 +4,7 @@
 #include "Items/Fragments/Bag_ItemFragment.h"
 #include "Widgets/Composite/Bag_CompositeBase.h"
 #include "Widgets/Composite/Bag_Leaf_Image.h"
+#include "Widgets/Composite/Bag_Leaf_Text.h"
 
 void FBag_InventoryItemFragment::Assimilate(UBag_CompositeBase* Composite) const
 {
@@ -27,4 +28,15 @@ void FBag_ImageFragment::Assimilate(UBag_CompositeBase* Composite) const
 	Image->SetImage(Icon);
 	Image->SetBoxSize(IconDimensions);
 	Image->SetImageSize(IconDimensions);
+}
+
+void FBag_TextFragment::Assimilate(UBag_CompositeBase* Composite) const
+{
+	FBag_InventoryItemFragment::Assimilate(Composite);
+	if (!MatchesWidgetTag(Composite)) return;
+
+	UBag_Leaf_Text* LeafText = Cast<UBag_Leaf_Text>(Composite);
+	if (!IsValid(LeafText)) return;
+
+	LeafText->SetText(FragmentText);
 }
