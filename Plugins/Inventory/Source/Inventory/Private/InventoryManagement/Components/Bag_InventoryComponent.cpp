@@ -101,6 +101,23 @@ void UBag_InventoryComponent::Server_DropItem_Implementation(UBag_InventoryItem*
 	SpawnDroppedItem(Item, StackCount);
 }
 
+void UBag_InventoryComponent::Server_ConsumeItem_Implementation(UBag_InventoryItem* Item)
+{
+	const int32 NewStackCount = Item->GetTotalStackCount() - 1;
+	if (NewStackCount <= 0)
+	{
+		InventoryList.RemoveEntry(Item);
+	}
+	else
+	{
+		Item->SetTotalStackCount(NewStackCount);
+	}
+	if (FBag_ConsumableFragment* ConsumableFragment = Item->GetItemManifestMutable().GetFragmentOfTypeMutable<FBag_ConsumableFragment>())
+	{
+		ConsumableFragment->OnConsume(OwningController.Get());
+	}
+}
+
 void UBag_InventoryComponent::ToggleInventoryMenu()
 {
 	if (bInventoryMenuOpen)

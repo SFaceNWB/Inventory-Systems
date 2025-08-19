@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "StructUtils/InstancedStruct.h"
 
 #include "Bag_ItemFragment.generated.h"
 
@@ -24,7 +25,7 @@ struct FBag_ItemFragment
 	virtual void Manifest() {}
 private:
 
-	UPROPERTY(EditAnywhere, Category = "Inventory")
+	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (Categories = "FragmentTags"))
 	FGameplayTag FragmentTag = FGameplayTag::EmptyTag;
 };
 
@@ -98,6 +99,7 @@ struct FBag_LabeledNumberFragment : public FBag_InventoryItemFragment
 
 	virtual void Assimilate(UBag_CompositeBase* Composite) const override;
 	virtual void Manifest() override;
+	float GetValue() const { return Value; }
 
 
 	//当第一次显示时，这个片段将随机化。但装备和丢下时，应该保持相同的值，所以不应该发生随机化。
@@ -148,8 +150,45 @@ private:
 	int32 StackCount{ 1 };
 };
 
+// 使用片段
+
+USTRUCT(BlueprintType)
+struct FBag_ConsumeModifier : public FBag_LabeledNumberFragment
+{
+	GENERATED_BODY()
+
+	virtual void OnConsume(APlayerController* PC) {}
+
+};
+
+USTRUCT(BlueprintType)
+struct FBag_ConsumableFragment : public FBag_InventoryItemFragment
+{
+	GENERATED_BODY()
+
+	virtual void OnConsume(APlayerController* PC);
+	virtual void Assimilate(UBag_CompositeBase* Composite) const override;
+	virtual void Manifest() override;
+private:
+
+	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (ExcludeBaseStruct))
+	TArray<TInstancedStruct<FBag_ConsumeModifier>> ConsumeModifiers;
+};
 
 
+USTRUCT(blueprintType)
+struct FBag_HealthPotionFragment : public FBag_ConsumeModifier
+{
+	GENERATED_BODY()
+
+	virtual void OnConsume(APlayerController* PC) override;
+};
 
 
+USTRUCT(blueprintType)
+struct FBag_ManaPotionFragment : public FBag_ConsumeModifier
+{
+	GENERATED_BODY()
 
+	virtual void OnConsume(APlayerController* PC) override;
+};

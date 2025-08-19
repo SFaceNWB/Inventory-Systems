@@ -70,3 +70,43 @@ void FBag_LabeledNumberFragment::Manifest()
 	}
 	bRandomizeOnManifest = false;
 }
+
+void FBag_ConsumableFragment::OnConsume(APlayerController* PC)
+{
+	for (auto& Modifier : ConsumeModifiers)
+	{
+		auto& ModifierRef = Modifier.GetMutable();
+		ModifierRef.OnConsume(PC);
+	}
+}
+
+void FBag_ConsumableFragment::Assimilate(UBag_CompositeBase* Composite) const
+{
+	FBag_InventoryItemFragment::Assimilate(Composite);
+	for (const auto& Modifier : ConsumeModifiers)
+	{
+		const auto& ModifierRef = Modifier.Get();
+		ModifierRef.Assimilate(Composite);
+	}
+}
+
+void FBag_ConsumableFragment::Manifest()
+{
+	FBag_InventoryItemFragment::Manifest();
+	for (auto& Modifier : ConsumeModifiers)
+	{
+		auto& ModifierRef = Modifier.GetMutable();
+		ModifierRef.Manifest();
+	}
+
+}
+
+void FBag_HealthPotionFragment::OnConsume(APlayerController* PC)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Health  Potion consumed! Healing by: %f"), GetValue()));
+}
+
+void FBag_ManaPotionFragment::OnConsume(APlayerController* PC)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Mana  Potion consumed! Healing by: %f"), GetValue()));
+}

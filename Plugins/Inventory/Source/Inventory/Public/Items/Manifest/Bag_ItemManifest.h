@@ -45,7 +45,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (ExcludeBaseStruct))
 	TArray<TInstancedStruct<FBag_ItemFragment>> Fragments;
 
-	UPROPERTY(EditAnywhere, Category = "Inventory")
+	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (Categories = "GameItems"))
 	EBag_ItemCategory ItemCategory{ EBag_ItemCategory::None };
 
 	UPROPERTY(EditAnywhere, Category = "Inventory")
