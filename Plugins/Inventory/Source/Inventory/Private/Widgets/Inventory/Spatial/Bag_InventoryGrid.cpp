@@ -855,6 +855,11 @@ bool UBag_InventoryGrid::HasHoverItem() const
 	return IsValid(HoverItem);
 }
 
+UBag_HoverItem* UBag_InventoryGrid::GetHoverItem() const
+{
+	return HoverItem;
+}
+
 void UBag_InventoryGrid::ShowCursor()
 {
 	if (!IsValid(GetOwningPlayer()))

@@ -7,6 +7,7 @@
 #include "Types/Bag_GridTypes.h"
 #include "Bag_InventoryBase.generated.h"
 
+class UBag_HoverItem;
 class UBag_ItemComponent;
 class UBag_InventoryItem;
 /**
@@ -21,4 +22,5 @@ public:
 	virtual void OnItemHovered(UBag_InventoryItem* Item){ }
 	virtual void OnItemUnhovered() { }
 	virtual bool HasHoverItem() const { return false; }
+	virtual UBag_HoverItem* GetHoverItem() const { return nullptr; }
 };

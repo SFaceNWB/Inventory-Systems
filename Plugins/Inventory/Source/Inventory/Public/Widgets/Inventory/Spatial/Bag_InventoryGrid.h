@@ -43,6 +43,7 @@ public:
 	void SetOwningCanvas(UCanvasPanel* OwningCanvas);
 	void DropItem();
 	bool HasHoverItem() const;
+	UBag_HoverItem* GetHoverItem() const;
 private:
 
 	TWeakObjectPtr<UBag_InventoryComponent> InventoryComponent;

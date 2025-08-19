@@ -12,6 +12,8 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Items/Bag_InventoryItem.h"
 #include "Widgets/ItemDescription/Bag_ItemDescription.h"
+#include "Blueprint/WidgetTree.h"
+#include "Widgets/Inventory/GridSlots/Bag_EquippedGridSlot.h"
 
 void UBag_SpatialInventory::NativeOnInitialized()
 {
@@ -26,6 +28,18 @@ void UBag_SpatialInventory::NativeOnInitialized()
 	Grid_Craftables->SetOwningCanvas(CanvasPanel);
 
 	ShowEquipped();
+
+	WidgetTree->ForEachWidget(
+		[this](UWidget* Widget)
+		{
+			UBag_EquippedGridSlot* EquippedGridSlot = Cast<UBag_EquippedGridSlot>(Widget);
+			if (IsValid(EquippedGridSlot))
+			{
+				EquippedGridSlots.Add(EquippedGridSlot);
+				EquippedGridSlot->EquippedGridSlotClicked.AddDynamic(this, &ThisClass::EquippedGridSlotClicked);
+			}
+
+		});
 }
 
 FReply UBag_SpatialInventory::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
@@ -103,6 +117,15 @@ bool UBag_SpatialInventory::HasHoverItem() const
 	return false;
 }
 
+UBag_HoverItem* UBag_SpatialInventory::GetHoverItem() const
+{
+	if (!ActiveGrid.IsValid())
+	{
+		return nullptr;
+	}
+	return ActiveGrid->GetHoverItem();
+}
+
 UBag_ItemDescription* UBag_SpatialInventory::GetItemDescription()
 {
 	if (!IsValid(ItemDescription))
@@ -126,6 +149,12 @@ void UBag_SpatialInventory::ShowConsumables()
 void UBag_SpatialInventory::ShowCraftables()
 {
 	SetActiveGrid(Grid_Craftables,Button_Craftables);
+}
+
+void UBag_SpatialInventory::EquippedGridSlotClicked(UBag_EquippedGridSlot* EquippedGridSlot,
+	const FGameplayTag& EquipmentTypeTag)
+{
+
 }
 
 void UBag_SpatialInventory::DisableButton(UButton* Button)

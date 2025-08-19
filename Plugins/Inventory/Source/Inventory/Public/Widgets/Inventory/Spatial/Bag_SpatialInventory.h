@@ -3,14 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Widgets/Inventory/InventoryBase/Bag_InventoryBase.h"
 #include "Bag_SpatialInventory.generated.h"
 
+class UBag_EquippedGridSlot;
 class UBag_ItemDescription;
 class UCanvasPanel;
 class UButton;
 class UWidgetSwitcher;
 class UBag_InventoryGrid;
+class UBag_HoverItem;
 /**
  * 
  */
@@ -29,7 +32,11 @@ public:
 	virtual void OnItemHovered(UBag_InventoryItem* Item) override;
 	virtual void OnItemUnhovered() override;
 	virtual bool HasHoverItem() const override;
+	virtual UBag_HoverItem* GetHoverItem() const override;
 private:
+
+	UPROPERTY()
+	TArray<TObjectPtr<UBag_EquippedGridSlot>> EquippedGridSlots;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCanvasPanel> CanvasPanel;
@@ -76,6 +83,9 @@ private:
 
 	UFUNCTION()
 	void ShowCraftables();
+
+	UFUNCTION()
+	void EquippedGridSlotClicked(UBag_EquippedGridSlot* EquippedGridSlot, const FGameplayTag& EquipmentTypeTag);
 
 	void DisableButton(UButton* Button);
 	void SetActiveGrid(UBag_InventoryGrid* Grid, UButton* Button);
