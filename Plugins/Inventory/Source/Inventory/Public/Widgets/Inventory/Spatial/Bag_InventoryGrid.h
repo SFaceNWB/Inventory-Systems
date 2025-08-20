@@ -46,14 +46,17 @@ public:
 	UBag_HoverItem* GetHoverItem() const;
 	float GetTileSize() const;
 	void ClearHoverItem();
+	void AssignHoverItem(UBag_InventoryItem* InventoryItem);
+	void OnHide();
+
 private:
 
 	TWeakObjectPtr<UBag_InventoryComponent> InventoryComponent;
 	TWeakObjectPtr<UCanvasPanel> OwningCanvasPanel;
 
 	void ConstructGrid();
-	FBag_SlotAvailabilityResult HasRoomForItem(const UBag_InventoryItem* Item);
-	FBag_SlotAvailabilityResult HasRoomForItem(const FBag_ItemManifest& Manifest);
+	FBag_SlotAvailabilityResult HasRoomForItem(const UBag_InventoryItem* Item, const int32 StackAmountOverride = -1);
+	FBag_SlotAvailabilityResult HasRoomForItem(const FBag_ItemManifest& Manifest, const int32 StackAmountOverride = -1);
 	void AddItemToIndices(const FBag_SlotAvailabilityResult& Result, UBag_InventoryItem* NewItem);
 	bool MatchesCategory(const UBag_InventoryItem* Item) const;
 	FVector2D GetDrawSize(const FBag_GridFragment* GridFragment) const;
@@ -75,7 +78,6 @@ private:
 	bool IsRightClick(const FPointerEvent& MouseEvent) const;
 	bool IsLeftClick(const FPointerEvent& MouseEvent) const;
 	void PickUp(UBag_InventoryItem* ClickedInventoryItem, const int32 GridIndex);
-	void AssignHoverItem(UBag_InventoryItem* InventoryItem);
 	void AssignHoverItem(UBag_InventoryItem* InventoryItem, const int32 GridIndex, const int32 PreviousGridIndex);
 	void RemoveItemFromGrid(UBag_InventoryItem* InventoryItem, const int32 GridIndex);
 	void UpdateTileParameters(const FVector2D& CanvasPosition, const FVector2D& MousePosition);
@@ -100,6 +102,7 @@ private:
 	bool ShouldFillInStack(const int32 RoomInClickedSlot, const int32 HoveredStackCount) const;
 	void FillInStack(const int32 FillAmount, const int32 Remainder, const int32 Index);
 	void CreateItemPopUp(const int32 GridIndex);
+	void PutHoverItemBack();
 
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	TSubclassOf<UBag_ItemPopUp> ItemPopUpClass;
@@ -144,6 +147,9 @@ private:
 
 	UFUNCTION()
 	void OnPopUpMenuConsume(int32 Index);
+
+	UFUNCTION()
+	void OnInventoryMenuToggle(bool bOpen);
 
 	UPROPERTY(EditAnywhere,BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Inventory")
 	EBag_ItemCategory ItemCategory;

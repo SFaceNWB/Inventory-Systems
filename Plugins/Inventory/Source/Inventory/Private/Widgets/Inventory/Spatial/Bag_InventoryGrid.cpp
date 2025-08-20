@@ -29,6 +29,7 @@ void UBag_InventoryGrid::NativeOnInitialized()
 	InventoryComponent = UBag_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
 	InventoryComponent->OnItemAdded.AddDynamic(this, &ThisClass::AddItem);
 	InventoryComponent->OnStackChange.AddDynamic(this, &ThisClass::AddStacks);
+	InventoryComponent->OnInventoryMenuToggle.AddDynamic(this, &ThisClass::OnInventoryMenuToggle);
 }
 
 void UBag_InventoryGrid::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -51,12 +52,12 @@ FBag_SlotAvailabilityResult UBag_InventoryGrid::HasRoomForItem(const UBag_ItemCo
 	return HasRoomForItem(ItemComponent->GetItemManifest());
 }
 
-FBag_SlotAvailabilityResult UBag_InventoryGrid::HasRoomForItem(const UBag_InventoryItem* Item)
+FBag_SlotAvailabilityResult UBag_InventoryGrid::HasRoomForItem(const UBag_InventoryItem* Item, const int32 StackAmountOverride)
 {
-	return HasRoomForItem(Item->GetItemManifest());
+	return HasRoomForItem(Item->GetItemManifest(), StackAmountOverride);
 }
 
-FBag_SlotAvailabilityResult UBag_InventoryGrid::HasRoomForItem(const FBag_ItemManifest& Manifest)
+FBag_SlotAvailabilityResult UBag_InventoryGrid::HasRoomForItem(const FBag_ItemManifest& Manifest, const int32 StackAmountOverride)
 {
 	FBag_SlotAvailabilityResult Result;
 
@@ -67,6 +68,10 @@ FBag_SlotAvailabilityResult UBag_InventoryGrid::HasRoomForItem(const FBag_ItemMa
 	// 确认要添加多少堆叠物品。
 	const int32 MaxStackSize = StackableFragment ? StackableFragment->GetMaxStackSize() : 1;
 	int32 AmountToFill = StackableFragment ? StackableFragment->GetStackCount() : 1;
+	if (StackAmountOverride != -1 && Result.bStackable)
+	{
+		AmountToFill = StackAmountOverride;
+	}
 
 	TSet<int32> CheckIndices;
 	// 对每个网格槽：
@@ -388,8 +393,13 @@ void UBag_InventoryGrid::AssignHoverItem(UBag_InventoryItem* InventoryItem)
 	GetOwningPlayer()->SetMouseCursorWidget(EMouseCursor::Default, HoverItem);
 }
 
+void UBag_InventoryGrid::OnHide()
+{
+	PutHoverItemBack();
+}
+
 void UBag_InventoryGrid::AssignHoverItem(UBag_InventoryItem* InventoryItem, const int32 GridIndex,
-	const int32 PreviousGridIndex)
+                                         const int32 PreviousGridIndex)
 {
 	AssignHoverItem(InventoryItem);
 	HoverItem->SetPreviousGridIndex(PreviousGridIndex);
@@ -833,6 +843,19 @@ void UBag_InventoryGrid::CreateItemPopUp(const int32 GridIndex)
 	}
 }
 
+void UBag_InventoryGrid::PutHoverItemBack()
+{
+	if (!IsValid(HoverItem))
+	{
+		return;
+	}
+	FBag_SlotAvailabilityResult Result = HasRoomForItem(HoverItem->GetInventoryItem(), HoverItem->GetStackCount());
+	Result.Item = HoverItem->GetInventoryItem();
+
+	AddStacks(Result);
+	ClearHoverItem();
+}
+
 void UBag_InventoryGrid::DropItem()
 {
 	if (!IsValid(HoverItem))
@@ -964,8 +987,12 @@ void UBag_InventoryGrid::OnSlottedItemClicked(int32 GridIndex, const FPointerEve
 			return;
 		}
 	}
-	// 交换悬停物品和点击的物品
-	SwapWithHoverItem(ClickedInventoryItem, GridIndex);
+	// 确保可以与有效物品交换
+	if (CurrentQueryResult.ValidItem.IsValid())
+	{
+		// 交换悬停物品和点击的物品
+		SwapWithHoverItem(ClickedInventoryItem, GridIndex);
+	}
 }
 
 void UBag_InventoryGrid::OnGridSlotClicked(int32 GridIndex, const FPointerEvent& MouseEvent)
@@ -1071,6 +1098,14 @@ void UBag_InventoryGrid::OnPopUpMenuConsume(int32 Index)
 	if (NewStackCount <= 0)
 	{
 		RemoveItemFromGrid(RightClickedItem, Index);
+	}
+}
+
+void UBag_InventoryGrid::OnInventoryMenuToggle(bool bOpen)
+{
+	if (!bOpen)
+	{
+		PutHoverItemBack();
 	}
 }
 

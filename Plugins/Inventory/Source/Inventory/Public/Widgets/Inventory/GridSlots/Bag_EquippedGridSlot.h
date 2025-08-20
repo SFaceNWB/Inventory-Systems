@@ -23,6 +23,7 @@ public:
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
 	UBag_EquippedSlottedItem* OnItemEquipped(UBag_InventoryItem* Item, const FGameplayTag& EquipTypeTag, float TileSize);
+	void SetEquippedSlottedItem(UBag_EquippedSlottedItem* Item) { EquippedSlottedItem = Item; }
 
 	FEquippedGridSlotClicked EquippedGridSlotClicked;
 

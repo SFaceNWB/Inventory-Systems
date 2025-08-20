@@ -90,12 +90,17 @@ private:
 	void EquippedGridSlotClicked(UBag_EquippedGridSlot* EquippedGridSlot, const FGameplayTag& EquipmentTypeTag);
 
 	UFUNCTION()
-	void EquippedSlottedItemClicked(UBag_EquippedSlottedItem* SlottedItem);
+	void EquippedSlottedItemClicked(UBag_EquippedSlottedItem* EquippedSlottedItem);
 
 	void DisableButton(UButton* Button);
 	void SetActiveGrid(UBag_InventoryGrid* Grid, UButton* Button);
 	void SetItemDescriptionSizeAndPosition(UBag_ItemDescription* Description, UCanvasPanel* Canvas) const;
 	bool CanEquipHoverItem(UBag_EquippedGridSlot* EquippedGridSlot, const FGameplayTag& EquipmentTypeTag) const;
+	UBag_EquippedGridSlot* FindSlotWithEquippedItem(UBag_InventoryItem* EquippedItem) const;
+	void ClearSlotOfItem(UBag_EquippedGridSlot* EquippedGridSlot);
+	void RemoveEquippedSlottedItem(UBag_EquippedSlottedItem* EquippedSlottedItem);
+	void MakeEquippedSlottedItem(UBag_EquippedSlottedItem* EquippedSlottedItem, UBag_EquippedGridSlot* EquippedGridSlot, UBag_InventoryItem* ItemToEquip);
+	void BroadcastSlotClickedDelegates(UBag_InventoryItem* ItemToEquip, UBag_InventoryItem* ItemToUnEquip) const;
 
 	TWeakObjectPtr<UBag_InventoryGrid> ActiveGrid;
 };

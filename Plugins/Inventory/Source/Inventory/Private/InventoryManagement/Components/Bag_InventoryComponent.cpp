@@ -142,6 +142,7 @@ void UBag_InventoryComponent::ToggleInventoryMenu()
 	{
 		OpenInventoryMenu();
 	}
+	OnInventoryMenuToggle.Broadcast(bInventoryMenuOpen);
 }
 
 void UBag_InventoryComponent::AddRepSubObj(UObject* SubObj)

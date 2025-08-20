@@ -17,6 +17,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemChange, UBag_Inventory
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FNoRoomInInventory);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStackChange, const FBag_SlotAvailabilityResult&, Result);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FItemEquipStatusChange, UBag_InventoryItem*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryMenuToggle, bool, bOpen);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable )
 class INVENTORY_API UBag_InventoryComponent : public UActorComponent
@@ -59,6 +60,7 @@ public:
 	FStackChange OnStackChange;
 	FItemEquipStatusChange OnItemEquipped;
 	FItemEquipStatusChange OnItemUnequipped;
+	FInventoryMenuToggle OnInventoryMenuToggle;
 
 protected:
 	virtual void BeginPlay() override;
