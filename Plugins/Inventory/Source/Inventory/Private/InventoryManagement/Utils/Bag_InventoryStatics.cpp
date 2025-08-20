@@ -78,3 +78,13 @@ UBag_HoverItem* UBag_InventoryStatics::GetHoverItem(APlayerController* PC)
 	}
 	return InventoryBase->GetHoverItem();
 }
+
+UBag_InventoryBase* UBag_InventoryStatics::GetInventoryWidget(APlayerController* PC)
+{
+	UBag_InventoryComponent* IC = GetInventoryComponent(PC);
+	if (!IsValid(IC))
+	{
+		return nullptr;
+	}
+	return IC->GetInventoryMenu();
+}

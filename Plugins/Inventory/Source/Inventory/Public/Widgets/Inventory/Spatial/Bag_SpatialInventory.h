@@ -7,6 +7,7 @@
 #include "Widgets/Inventory/InventoryBase/Bag_InventoryBase.h"
 #include "Bag_SpatialInventory.generated.h"
 
+class UBag_EquippedSlottedItem;
 class UBag_EquippedGridSlot;
 class UBag_ItemDescription;
 class UCanvasPanel;
@@ -33,6 +34,7 @@ public:
 	virtual void OnItemUnhovered() override;
 	virtual bool HasHoverItem() const override;
 	virtual UBag_HoverItem* GetHoverItem() const override;
+	virtual float GetTileSize() const override;
 private:
 
 	UPROPERTY()
@@ -87,9 +89,13 @@ private:
 	UFUNCTION()
 	void EquippedGridSlotClicked(UBag_EquippedGridSlot* EquippedGridSlot, const FGameplayTag& EquipmentTypeTag);
 
+	UFUNCTION()
+	void EquippedSlottedItemClicked(UBag_EquippedSlottedItem* SlottedItem);
+
 	void DisableButton(UButton* Button);
 	void SetActiveGrid(UBag_InventoryGrid* Grid, UButton* Button);
 	void SetItemDescriptionSizeAndPosition(UBag_ItemDescription* Description, UCanvasPanel* Canvas) const;
+	bool CanEquipHoverItem(UBag_EquippedGridSlot* EquippedGridSlot, const FGameplayTag& EquipmentTypeTag) const;
 
 	TWeakObjectPtr<UBag_InventoryGrid> ActiveGrid;
 };

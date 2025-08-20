@@ -44,6 +44,8 @@ public:
 	void DropItem();
 	bool HasHoverItem() const;
 	UBag_HoverItem* GetHoverItem() const;
+	float GetTileSize() const;
+	void ClearHoverItem();
 private:
 
 	TWeakObjectPtr<UBag_InventoryComponent> InventoryComponent;
@@ -87,7 +89,6 @@ private:
 	void UnHighlightSlots(const int32 Index, const FIntPoint& Dimensions);
 	void ChangeHoverType(const int32 Index, const FIntPoint& Dimensions, Ebag_GridSlotState GridSlotState);
 	void PutDownOnIndex(const int32 Index);
-	void ClearHoverItem();
 	UUserWidget* GetVisibleCursorWidget();
 	UUserWidget* GetHiddenCursorWidget();
 	bool IsSameStackable(const UBag_InventoryItem* ClickedInventoryItem) const;

@@ -860,6 +860,11 @@ UBag_HoverItem* UBag_InventoryGrid::GetHoverItem() const
 	return HoverItem;
 }
 
+float UBag_InventoryGrid::GetTileSize() const
+{
+	return TileSize;
+}
+
 void UBag_InventoryGrid::ShowCursor()
 {
 	if (!IsValid(GetOwningPlayer()))

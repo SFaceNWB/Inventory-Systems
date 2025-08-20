@@ -118,6 +118,20 @@ void UBag_InventoryComponent::Server_ConsumeItem_Implementation(UBag_InventoryIt
 	}
 }
 
+void UBag_InventoryComponent::Server_EquipSlotClicked_Implementation(UBag_InventoryItem* ItemToEquip,
+	UBag_InventoryItem* ItemToUnequip)
+{
+	Multicast_EquipSlotClicked(ItemToEquip, ItemToUnequip);
+}
+
+void UBag_InventoryComponent::Multicast_EquipSlotClicked_Implementation(UBag_InventoryItem* ItemToEquip,
+	UBag_InventoryItem* ItemToUnequip)
+{
+	// Equipment Component将监听这个委托
+	OnItemEquipped.Broadcast(ItemToEquip);
+	OnItemUnequipped.Broadcast(ItemToUnequip);
+}
+
 void UBag_InventoryComponent::ToggleInventoryMenu()
 {
 	if (bInventoryMenuOpen)

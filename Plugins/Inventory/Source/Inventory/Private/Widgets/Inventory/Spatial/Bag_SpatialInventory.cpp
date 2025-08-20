@@ -13,7 +13,10 @@
 #include "Items/Bag_InventoryItem.h"
 #include "Widgets/ItemDescription/Bag_ItemDescription.h"
 #include "Blueprint/WidgetTree.h"
+#include "InventoryManagement/Components/Bag_InventoryComponent.h"
 #include "Widgets/Inventory/GridSlots/Bag_EquippedGridSlot.h"
+#include "Widgets/Inventory/HoverItem/Bag_HoverItem.h"
+#include "Widgets/Inventory/SlottedItems/Bag_EquippedSlottedItem.h"
 
 void UBag_SpatialInventory::NativeOnInitialized()
 {
@@ -126,6 +129,11 @@ UBag_HoverItem* UBag_SpatialInventory::GetHoverItem() const
 	return ActiveGrid->GetHoverItem();
 }
 
+float UBag_SpatialInventory::GetTileSize() const
+{
+	return Grid_Equipped->GetTileSize();
+}
+
 UBag_ItemDescription* UBag_SpatialInventory::GetItemDescription()
 {
 	if (!IsValid(ItemDescription))
@@ -155,9 +163,34 @@ void UBag_SpatialInventory::EquippedGridSlotClicked(UBag_EquippedGridSlot* Equip
 	const FGameplayTag& EquipmentTypeTag)
 {
 	// 检查是否可以装备悬停物品
+	if (!CanEquipHoverItem(EquippedGridSlot, EquipmentTypeTag))
+	{
+		return;
+	}
+	UBag_HoverItem* HoverItem = GetHoverItem();
 	// 创建一个装备插槽物品并将其添加到装备网格插槽中
+	const float TileSize = UBag_InventoryStatics::GetInventoryWidget(GetOwningPlayer())->GetTileSize();
+	UBag_EquippedSlottedItem* EquippedSlottedItem = EquippedGridSlot->OnItemEquipped(HoverItem->GetInventoryItem(), EquipmentTypeTag, TileSize);
+	EquippedSlottedItem->OnEquippedSlottedItemClicked.AddDynamic(this, &ThisClass::EquippedSlottedItemClicked);
+
 	// 清除悬停物品
-	// 让服务器知道装备了这个物品(特别是卸下物品)
+	Grid_Equipped->ClearHoverItem();
+
+	// 让服务器知道装备了这个物品(也可能是卸下物品)
+	UBag_InventoryComponent* InventoryComponent = UBag_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
+	check(IsValid(InventoryComponent));
+
+	InventoryComponent->Server_EquipSlotClicked(HoverItem->GetInventoryItem(), nullptr);
+
+	if (GetOwningPlayer()->GetNetMode() != NM_DedicatedServer)
+	{
+		InventoryComponent->OnItemEquipped.Broadcast(HoverItem->GetInventoryItem());
+	}
+}
+
+void UBag_SpatialInventory::EquippedSlottedItemClicked(UBag_EquippedSlottedItem* SlottedItem)
+{
+
 }
 
 void UBag_SpatialInventory::DisableButton(UButton* Button)
@@ -199,4 +232,24 @@ void UBag_SpatialInventory::SetItemDescriptionSizeAndPosition(UBag_ItemDescripti
 		ItemDescriptionSize,
 		UWidgetLayoutLibrary::GetMousePositionOnViewport(GetOwningPlayer()));
 	ItemDescripttionCPS->SetPosition(ClampedPosition);
+}
+
+bool UBag_SpatialInventory::CanEquipHoverItem(UBag_EquippedGridSlot* EquippedGridSlot,
+	const FGameplayTag& EquipmentTypeTag) const
+{
+	if (!IsValid(EquippedGridSlot) || EquippedGridSlot->GetInventoryItem().IsValid())
+	{
+		return false;
+	}
+
+	UBag_HoverItem* HoverItem = GetHoverItem();
+	if (!IsValid(HoverItem))
+	{
+		return false;
+	}
+	UBag_InventoryItem* HeldItem = HoverItem->GetInventoryItem();
+
+	return HasHoverItem() && IsValid(HeldItem) && !HoverItem->IsStackable()&& 
+		HeldItem->GetItemManifest().GetItemCategory() == EBag_ItemCategory::Equipped &&
+		HeldItem->GetItemManifest().GetItemType().MatchesTag(EquipmentTypeTag);
 }

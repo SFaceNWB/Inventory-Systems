@@ -8,6 +8,7 @@
 #include "Widgets/Utils/Bag_WidgetUtils.h"
 #include "Bag_InventoryStatics.generated.h"
 
+class UBag_InventoryBase;
 class UBag_HoverItem;
 class UBag_ItemComponent;
 class UBag_InventoryComponent;
@@ -37,6 +38,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	static UBag_HoverItem* GetHoverItem(APlayerController* PC);
+
+	static UBag_InventoryBase* GetInventoryWidget(APlayerController* PC);
 };
 
 

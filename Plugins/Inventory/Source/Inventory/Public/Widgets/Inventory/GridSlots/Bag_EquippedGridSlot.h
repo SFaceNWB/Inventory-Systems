@@ -7,7 +7,10 @@
 #include "GameplayTagContainer.h"
 #include "Bag_EquippedGridSlot.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FEquippedGridSlotClicked, UBag_EquippedGridSlot*, GridSlot, const FGameplayTag&, EquipmentTypeTag);
+class UOverlay;
+class UBag_EquippedSlottedItem;
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FEquippedGridSlotClicked, UBag_EquippedGridSlot*, GridSlot,
+                                             const FGameplayTag&, EquipmentTypeTag);
 
 UCLASS()
 class INVENTORY_API UBag_EquippedGridSlot : public UBag_GridSlot
@@ -19,6 +22,8 @@ public:
 	virtual void NativeOnMouseLeave(const FPointerEvent& InMouseEvent) override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
+	UBag_EquippedSlottedItem* OnItemEquipped(UBag_InventoryItem* Item, const FGameplayTag& EquipTypeTag, float TileSize);
+
 	FEquippedGridSlotClicked EquippedGridSlotClicked;
 
 private:
@@ -28,4 +33,13 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Image_GrayedOutIcon;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	TSubclassOf<UBag_EquippedSlottedItem> EquippedSlottedItemClass;
+
+	UPROPERTY()
+	TObjectPtr<UBag_EquippedSlottedItem> EquippedSlottedItem;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UOverlay> Overlay_Root;
 };
