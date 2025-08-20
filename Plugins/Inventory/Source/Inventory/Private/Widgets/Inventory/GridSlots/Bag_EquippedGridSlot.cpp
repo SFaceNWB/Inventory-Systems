@@ -39,7 +39,7 @@ void UBag_EquippedGridSlot::NativeOnMouseLeave(const FPointerEvent& InMouseEvent
 	if (HoverItem->GetItemType().MatchesTag(EquipmentTypeTag))
 	{
 		SetUnOccupiedTexture();
-		Image_GrayedOutIcon->SetVisibility(ESlateVisibility::Collapsed);
+		Image_GrayedOutIcon->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 

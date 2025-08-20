@@ -154,7 +154,10 @@ void UBag_SpatialInventory::ShowCraftables()
 void UBag_SpatialInventory::EquippedGridSlotClicked(UBag_EquippedGridSlot* EquippedGridSlot,
 	const FGameplayTag& EquipmentTypeTag)
 {
-
+	// 检查是否可以装备悬停物品
+	// 创建一个装备插槽物品并将其添加到装备网格插槽中
+	// 清除悬停物品
+	// 让服务器知道装备了这个物品(特别是卸下物品)
 }
 
 void UBag_SpatialInventory::DisableButton(UButton* Button)

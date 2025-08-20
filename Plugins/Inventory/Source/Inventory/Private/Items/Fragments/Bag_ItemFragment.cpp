@@ -103,10 +103,58 @@ void FBag_ConsumableFragment::Manifest()
 
 void FBag_HealthPotionFragment::OnConsume(APlayerController* PC)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Health  Potion consumed! Healing by: %f"), GetValue()));
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Health  Potion consumed! Healing by: %f"), GetValue()));
 }
 
 void FBag_ManaPotionFragment::OnConsume(APlayerController* PC)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Mana  Potion consumed! Healing by: %f"), GetValue()));
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Mana  Potion consumed! Healing by: %f"), GetValue()));
+}
+
+void FBag_StrengthModifier::OnEquip(APlayerController* PC)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Item equipped. Strength  creased by: %f"), GetValue()));
+}
+
+void FBag_StrengthModifier::OnUnequip(APlayerController* PC)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Item unequipped. Strength  decreased by: %f"), GetValue()));
+}
+
+void FBag_EquipmentFragment::OnEquip(APlayerController* PC)
+{
+	if (bEquipped)
+	{
+		return;
+	}
+	bEquipped = true;
+	for (auto& Modifier : EquipModifiers)
+	{
+		auto& ModifierRef = Modifier.GetMutable();
+		ModifierRef.OnEquip(PC);
+	}
+}
+
+void FBag_EquipmentFragment::OnUnequip(APlayerController* PC)
+{
+	if (!bEquipped)
+	{
+		return;
+	}
+	bEquipped = false;
+	for (auto& Modifier : EquipModifiers)
+	{
+		auto& ModifierRef = Modifier.GetMutable();
+		ModifierRef.OnUnequip(PC);
+	}
+}
+
+void FBag_EquipmentFragment::Assimilate(UBag_CompositeBase* Composite) const
+{
+	FBag_InventoryItemFragment::Assimilate(Composite);
+	for (const auto& Modifier : EquipModifiers)
+	{
+		const auto& ModifierRef = Modifier.Get();
+		ModifierRef.Assimilate(Composite);
+	}
 }
