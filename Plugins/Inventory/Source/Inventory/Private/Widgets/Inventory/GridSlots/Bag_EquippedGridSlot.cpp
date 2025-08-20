@@ -25,6 +25,7 @@ void UBag_EquippedGridSlot::NativeOnMouseEnter(const FGeometry& InGeometry, cons
 	{
 		return;
 	}
+	
 	if (HoverItem->GetItemType().MatchesTag(EquipmentTypeTag))
 	{
 		SetOccupiedTexture();
@@ -40,6 +41,10 @@ void UBag_EquippedGridSlot::NativeOnMouseLeave(const FPointerEvent& InMouseEvent
 	}
 	UBag_HoverItem* HoverItem = UBag_InventoryStatics::GetHoverItem(GetOwningPlayer());
 	if (!IsValid(HoverItem))
+	{
+		return;
+	}
+	if (IsValid(EquippedSlottedItem))
 	{
 		return;
 	}
