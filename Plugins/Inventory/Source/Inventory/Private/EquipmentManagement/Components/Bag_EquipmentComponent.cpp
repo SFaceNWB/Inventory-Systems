@@ -11,6 +11,20 @@
 #include "Items/Bag_InventoryItem.h"
 #include "Items/Fragments/Bag_ItemFragment.h"
 
+void UBag_EquipmentComponent::SetOwningSkeletalMesh(USkeletalMeshComponent* OwningMesh)
+{
+	OwningSkeletalMesh = OwningMesh;
+}
+
+void UBag_EquipmentComponent::InitializeOwner(APlayerController* PlayerController)
+{
+	if (IsValid(PlayerController))
+	{
+		OwningPlayerController = PlayerController;
+	}
+	InitInventoryComponent();
+}
+
 void UBag_EquipmentComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -34,7 +48,10 @@ void UBag_EquipmentComponent::OnItemEquipped(UBag_InventoryItem* EquippedItem)
 	{
 		return;
 	}
-	EquipmentFragment->OnEquip(OwningPlayerController.Get());
+	if (!bIsProxy)
+	{
+		EquipmentFragment->OnEquip(OwningPlayerController.Get());
+	}
 	if (!OwningSkeletalMesh.IsValid())
 	{
 		return;
@@ -60,8 +77,10 @@ void UBag_EquipmentComponent::OnItemUnequipped(UBag_InventoryItem* UnequippedIte
 	{
 		return;
 	}
-	EquipmentFragment->OnUnequip(OwningPlayerController.Get());
-
+	if (!bIsProxy)
+	{
+		EquipmentFragment->OnUnequip(OwningPlayerController.Get());
+	}
 	RemoveEquippedActor(EquipmentFragment->GetEquipmentType());
 }
 
