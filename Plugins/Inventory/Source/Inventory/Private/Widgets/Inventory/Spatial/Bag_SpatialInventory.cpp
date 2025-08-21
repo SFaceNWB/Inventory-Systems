@@ -173,9 +173,6 @@ void UBag_SpatialInventory::EquippedGridSlotClicked(UBag_EquippedGridSlot* Equip
 	UBag_EquippedSlottedItem* EquippedSlottedItem = EquippedGridSlot->OnItemEquipped(HoverItem->GetInventoryItem(), EquipmentTypeTag, TileSize);
 	EquippedSlottedItem->OnEquippedSlottedItemClicked.AddDynamic(this, &ThisClass::EquippedSlottedItemClicked);
 
-	// 清除悬停物品
-	Grid_Equipped->ClearHoverItem();
-
 	// 让服务器知道装备了这个物品(也可能是卸下物品)
 	UBag_InventoryComponent* InventoryComponent = UBag_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
 	check(IsValid(InventoryComponent));
@@ -186,6 +183,9 @@ void UBag_SpatialInventory::EquippedGridSlotClicked(UBag_EquippedGridSlot* Equip
 	{
 		InventoryComponent->OnItemEquipped.Broadcast(HoverItem->GetInventoryItem());
 	}
+
+	// 清除悬停物品
+	Grid_Equipped->ClearHoverItem();
 }
 
 void UBag_SpatialInventory::EquippedSlottedItemClicked(UBag_EquippedSlottedItem* EquippedSlottedItem)
@@ -219,7 +219,7 @@ void UBag_SpatialInventory::EquippedSlottedItemClicked(UBag_EquippedSlottedItem*
 	MakeEquippedSlottedItem(EquippedSlottedItem, EquippedGridSlot, ItemToEquip);
 
 	// 广播委托OnItemEquipped/OnItemUnequipped(从库存组件)
-	BroadcastSlotClickedDelegates(ItemToEquip, ItemToEquip);
+	BroadcastSlotClickedDelegates(ItemToEquip, ItemToUnequip);
 
 }
 

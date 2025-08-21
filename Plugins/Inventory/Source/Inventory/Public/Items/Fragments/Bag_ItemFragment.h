@@ -8,6 +8,8 @@
 
 #include "Bag_ItemFragment.generated.h"
 
+class ABag_EquipActor;
+
 USTRUCT(BlueprintType)
 struct FBag_ItemFragment
 {
@@ -225,9 +227,26 @@ struct FBag_EquipmentFragment : public FBag_InventoryItemFragment
 	void OnEquip(APlayerController* PC);
 	void OnUnequip(APlayerController* PC);
 	virtual void Assimilate(UBag_CompositeBase* Composite) const override;
+	virtual void Manifest() override;
+
+	ABag_EquipActor* SpawnAttachedActor(USkeletalMeshComponent* AttachMesh) const;
+	void DestroyAttachedActor() const;
+	FGameplayTag GetEquipmentType() const { return EquipmentType; }
+	void SetEquippedActor(ABag_EquipActor* InEquipActor);
+
 private:
 
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	TArray<TInstancedStruct<FBag_EquipModifier>> EquipModifiers;
 
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	TSubclassOf<ABag_EquipActor> EquipActorClass = nullptr;
+
+	TWeakObjectPtr<ABag_EquipActor> EquipActor = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	FName SocketAttachPoint{ NAME_None };
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	FGameplayTag EquipmentType = FGameplayTag::EmptyTag;
 };

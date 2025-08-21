@@ -2,6 +2,8 @@
 
 
 #include "Items/Fragments/Bag_ItemFragment.h"
+
+#include "EquipmentManagement/EquipActor/Bag_EquipActor.h"
 #include "Widgets/Composite/Bag_CompositeBase.h"
 #include "Widgets/Composite/Bag_Leaf_Image.h"
 #include "Widgets/Composite/Bag_Leaf_labeledValue.h"
@@ -118,7 +120,7 @@ void FBag_StrengthModifier::OnEquip(APlayerController* PC)
 
 void FBag_StrengthModifier::OnUnequip(APlayerController* PC)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Item unequipped. Strength  decreased by: %f"), GetValue()));
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Item unequipped. Strength  decreased by: %f"), GetValue()));
 }
 
 void FBag_EquipmentFragment::OnEquip(APlayerController* PC)
@@ -157,4 +159,40 @@ void FBag_EquipmentFragment::Assimilate(UBag_CompositeBase* Composite) const
 		const auto& ModifierRef = Modifier.Get();
 		ModifierRef.Assimilate(Composite);
 	}
+}
+
+void FBag_EquipmentFragment::Manifest()
+{
+	FBag_InventoryItemFragment::Manifest();
+	for (auto& Modifier : EquipModifiers)
+	{
+		auto& ModifierRef = Modifier.GetMutable();
+		ModifierRef.Manifest();
+	}
+}
+
+ABag_EquipActor* FBag_EquipmentFragment::SpawnAttachedActor(USkeletalMeshComponent* AttachMesh) const
+{
+	if (!IsValid(EquipActorClass) || !IsValid(AttachMesh))
+	{
+		return nullptr;
+	}
+
+	ABag_EquipActor* SpawnedActor = AttachMesh->GetWorld()->SpawnActor<ABag_EquipActor>(EquipActorClass);
+	SpawnedActor->AttachToComponent(AttachMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, SocketAttachPoint);
+
+	return SpawnedActor;
+}
+
+void FBag_EquipmentFragment::DestroyAttachedActor() const
+{
+	if (EquipActor.IsValid())
+	{
+		EquipActor->Destroy();
+	}
+}
+
+void FBag_EquipmentFragment::SetEquippedActor(ABag_EquipActor* InEquipActor)
+{
+	EquipActor = InEquipActor;
 }
