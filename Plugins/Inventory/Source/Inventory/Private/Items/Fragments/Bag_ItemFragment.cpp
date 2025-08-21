@@ -123,6 +123,26 @@ void FBag_StrengthModifier::OnUnequip(APlayerController* PC)
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Item unequipped. Strength  decreased by: %f"), GetValue()));
 }
 
+void FBag_ArmorModifier::OnEquip(APlayerController* PC)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Item equipped. Armor  creased by: %f"), GetValue()));
+}
+
+void FBag_ArmorModifier::OnUnequip(APlayerController* PC)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Item unequipped. Armor  decreased by: %f"), GetValue()));
+}
+
+void FBag_DamageModifier::OnEquip(APlayerController* PC)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Item equipped. Damage  creased by: %f"), GetValue()));
+}
+
+void FBag_DamageModifier::OnUnequip(APlayerController* PC)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Item unequipped. Damage  decreased by: %f"), GetValue()));
+}
+
 void FBag_EquipmentFragment::OnEquip(APlayerController* PC)
 {
 	if (bEquipped)

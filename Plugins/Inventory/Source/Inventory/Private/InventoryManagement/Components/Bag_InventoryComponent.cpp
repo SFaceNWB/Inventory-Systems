@@ -48,11 +48,11 @@ void UBag_InventoryComponent::TryAddItem(UBag_ItemComponent* ItemComponent)
 	else if (Result.TotalRoomToFill > 0)
 	{
 		// 背包中不存在这个物品， 创建并更新背包中的相关槽位
-		Server_AddNewItem(ItemComponent, Result.bStackable ? Result.TotalRoomToFill : 0);
+		Server_AddNewItem(ItemComponent, Result.bStackable ? Result.TotalRoomToFill : 0, Result.Remainder);
 	}
 }
 
-void UBag_InventoryComponent::Server_AddNewItem_Implementation(UBag_ItemComponent* ItemComponent, int32 StackCount)
+void UBag_InventoryComponent::Server_AddNewItem_Implementation(UBag_ItemComponent* ItemComponent, int32 StackCount, int32 Remainder)
 {
 	UBag_InventoryItem* NewItem = InventoryList.AddEntry(ItemComponent);
 	NewItem->SetTotalStackCount(StackCount);
@@ -61,8 +61,14 @@ void UBag_InventoryComponent::Server_AddNewItem_Implementation(UBag_ItemComponen
 	{
 		OnItemAdded.Broadcast(NewItem);
 	}
-
-	ItemComponent->PickedUp();
+	if (Remainder == 0)
+	{
+		ItemComponent->PickedUp();
+	}
+	else if (FBag_StackableFragment* StackableFragment = ItemComponent->GetItemManifestMutable().GetFragmentOfTypeMutable<FBag_StackableFragment>())
+	{
+		StackableFragment->SetStackCount(Remainder);
+	}
 }
 
 void UBag_InventoryComponent::Server_AddStacksToItem_Implementation(UBag_ItemComponent* ItemComponent, int32 StackCount,
@@ -81,7 +87,7 @@ void UBag_InventoryComponent::Server_AddStacksToItem_Implementation(UBag_ItemCom
 	{
 		ItemComponent->PickedUp();
 	}
-	else if (FBag_StackableFragment* StackableFragment = ItemComponent->GetItemManifest().GetFragmentOfTypeMutable<FBag_StackableFragment>())
+	else if (FBag_StackableFragment* StackableFragment = ItemComponent->GetItemManifestMutable().GetFragmentOfTypeMutable<FBag_StackableFragment>())
 	{
 		StackableFragment->SetStackCount(Remainder);
 	}

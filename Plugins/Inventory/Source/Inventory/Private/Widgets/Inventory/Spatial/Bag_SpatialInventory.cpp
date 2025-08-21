@@ -91,8 +91,8 @@ void UBag_SpatialInventory::OnItemHovered(UBag_InventoryItem* Item)
 	DescriptionTimerDelegate.BindLambda(
 		[this, &Manifest, DescriptionWidget]()
 		{
-			Manifest.AssimilateInventoryFragments(DescriptionWidget);
 			GetItemDescription()->SetVisibility(ESlateVisibility::HitTestInvisible);
+			Manifest.AssimilateInventoryFragments(DescriptionWidget);
 		});
 	GetOwningPlayer()->GetWorldTimerManager().SetTimer(DescriptionTimer, DescriptionTimerDelegate, DescriptionTimerDelay, false);
 }
@@ -178,11 +178,6 @@ void UBag_SpatialInventory::EquippedGridSlotClicked(UBag_EquippedGridSlot* Equip
 	check(IsValid(InventoryComponent));
 
 	InventoryComponent->Server_EquipSlotClicked(HoverItem->GetInventoryItem(), nullptr);
-
-	if (GetOwningPlayer()->GetNetMode() != NM_DedicatedServer)
-	{
-		InventoryComponent->OnItemEquipped.Broadcast(HoverItem->GetInventoryItem());
-	}
 
 	// Çå³ýÐüÍ£ÎïÆ·
 	Grid_Equipped->ClearHoverItem();
@@ -344,11 +339,5 @@ void UBag_SpatialInventory::BroadcastSlotClickedDelegates(UBag_InventoryItem* It
 	UBag_InventoryComponent* InventoryComponent = UBag_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
 	check(IsValid(InventoryComponent));
 	InventoryComponent->Server_EquipSlotClicked(ItemToEquip, ItemToUnEquip);
-
-	if (GetOwningPlayer()->GetNetMode() != NM_DedicatedServer)
-	{
-		InventoryComponent->OnItemEquipped.Broadcast(ItemToEquip);
-		InventoryComponent->OnItemUnequipped.Broadcast(ItemToUnEquip);
-	}
 }
 

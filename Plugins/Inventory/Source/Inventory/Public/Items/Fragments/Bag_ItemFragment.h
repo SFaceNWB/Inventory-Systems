@@ -217,6 +217,23 @@ struct FBag_StrengthModifier : public FBag_EquipModifier
 
 };
 
+USTRUCT(BlueprintType)
+struct FBag_ArmorModifier : public FBag_EquipModifier
+{
+	GENERATED_BODY()
+
+	virtual void OnEquip(APlayerController* PC) override;
+	virtual void OnUnequip(APlayerController* PC) override;
+};
+
+USTRUCT(BlueprintType)
+struct FBag_DamageModifier : public FBag_EquipModifier
+{
+	GENERATED_BODY()
+
+	virtual void OnEquip(APlayerController* PC) override;
+	virtual void OnUnequip(APlayerController* PC) override;
+};
 
 USTRUCT(BlueprintType)
 struct FBag_EquipmentFragment : public FBag_InventoryItemFragment

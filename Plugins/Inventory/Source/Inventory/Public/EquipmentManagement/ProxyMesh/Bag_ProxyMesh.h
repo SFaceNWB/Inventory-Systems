@@ -15,6 +15,7 @@ class INVENTORY_API ABag_ProxyMesh : public AActor
 	
 public:	
 	ABag_ProxyMesh();
+	USkeletalMeshComponent* GetMesh() const { return Mesh; }
 
 protected:
 	virtual void BeginPlay() override;

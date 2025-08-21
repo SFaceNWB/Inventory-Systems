@@ -20,6 +20,7 @@ public:
 	void InitItemManifest(FBag_ItemManifest CopyOfManifest);
 
 	FBag_ItemManifest GetItemManifest()const { return ItemManifest; }
+	FBag_ItemManifest& GetItemManifestMutable() { return ItemManifest; }
 	FString GetPickupMessage() const { return PickupMessage; }
 	void PickedUp();
 

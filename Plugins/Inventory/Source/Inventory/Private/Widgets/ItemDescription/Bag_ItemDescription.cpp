@@ -9,3 +9,12 @@ FVector2D UBag_ItemDescription::GetBoxSize() const
 {
 	return SizeBox->GetDesiredSize();
 }
+
+void UBag_ItemDescription::SetVisibility(ESlateVisibility InVisibility)
+{
+	for (auto Child : GetChildren())
+	{
+		Child->Collapse();
+	}
+	Super::SetVisibility(InVisibility);
+}

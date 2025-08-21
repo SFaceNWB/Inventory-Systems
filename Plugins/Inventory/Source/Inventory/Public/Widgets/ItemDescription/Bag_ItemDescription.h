@@ -17,7 +17,7 @@ class INVENTORY_API UBag_ItemDescription : public UBag_Composite
 public:
 
 	FVector2D GetBoxSize() const;
-
+	virtual	void SetVisibility(ESlateVisibility InVisibility) override;
 private:
 
 	UPROPERTY(meta = (BindWidget))

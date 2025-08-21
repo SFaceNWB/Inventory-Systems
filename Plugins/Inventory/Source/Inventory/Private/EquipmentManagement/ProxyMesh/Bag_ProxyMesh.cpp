@@ -9,6 +9,7 @@
 ABag_ProxyMesh::ABag_ProxyMesh()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	SetReplicates(false);
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 

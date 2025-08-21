@@ -32,6 +32,14 @@ void ABag_PlayerController::ToggleInventory()
 		return;
 	}
 	InventoryComponent->ToggleInventoryMenu();
+	if (InventoryComponent->IsMenuOpen())
+	{
+		HUDWidget->SetVisibility(ESlateVisibility::Hidden);
+	}
+	else
+	{
+		HUDWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+	}
 }
 
 void ABag_PlayerController::BeginPlay()
